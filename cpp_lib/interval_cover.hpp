@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <limits>
 #include <optional>
+#include <numeric>
 
 namespace popup {
 
@@ -24,15 +25,13 @@ namespace popup {
   std::optional<std::vector<size_t>>
   interval_cover( double range_left,
                   double range_right,
-                  RandomAccessIterator ranges_start,
+                  RandomAccessIterator ranges_begin,
                   RandomAccessIterator ranges_end) {
     std::vector<size_t> result;
 
     // Keeps track of the original indices. This is the only mo
-    std::vector<size_t> indices(ranges_end - ranges_start);
-    for (size_t i = 0; i < indices.size(); i++) {
-      indices[i] = i;
-    }
+    std::vector<size_t> indices(ranges_end - ranges_begin);
+    std::iota(indices.begin(), indices.end(), 0);
 
     auto start = indices.begin();
     auto end = indices.end();
@@ -40,8 +39,8 @@ namespace popup {
     // Comparison method for the intervals. First by left value and secondarily
     // by right.
     auto comp = [&](const size_t &a_idx, const size_t &b_idx) {
-                  const range& a = *(ranges_start + a_idx);
-                  const range& b = *(ranges_start + b_idx);
+                  const range& a = *(ranges_begin + a_idx);
+                  const range& b = *(ranges_begin + b_idx);
 
                   if (a.first == b.first) {
                     return a.second > b.second;
@@ -64,8 +63,8 @@ namespace popup {
       size_t best_idx = 0;
 
       // Finds the
-      for (; current != end && (ranges_start + (*current))->first <= left; current++) {
-        auto r = *(ranges_start + (*current));
+      for (; current != end && (ranges_begin + (*current))->first <= left; current++) {
+        auto r = *(ranges_begin + (*current));
         if (r.second > best_range.second) {
           best_range = r;
           best_found = true;
