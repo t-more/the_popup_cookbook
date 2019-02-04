@@ -1,5 +1,4 @@
-module Popup.Knapsack where
-
+module Knapsack where
 
 import qualified Data.Vector.Unboxed as UV
 import qualified Data.Vector as V

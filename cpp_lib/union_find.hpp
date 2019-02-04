@@ -3,8 +3,7 @@
 #include <cstring>
 #include <stack>
 
-namespace popup {
-  class UnionFind {
+class UnionFind {
 
     struct Subset {
       size_t parent;
@@ -31,11 +30,14 @@ namespace popup {
 
 
     size_t find(size_t a) {
-      while (a != contents_[a].parent) {
-        contents_[a].parent = contents_[contents_[a].parent].parent;
-        a = contents_[a].parent;
-      }
-      return a;
+      //// 0.27 princeton
+      // while (a != contents_[a].parent) {
+      //   contents_[a].parent = contents_[contents_[a].parent].parent;
+      //   a = contents_[a].parent;
+      // }
+      // return a;
+
+      //// La Tomasi speciali 0.35
       // std::stack<size_t> s;
       // auto current = a;
 
@@ -49,12 +51,17 @@ namespace popup {
       //   s.pop();
       // }
       // return current;
+
+      //// El grande wikipedia 0.27
+      if (contents_[a].parent != a) {
+        contents_[a].parent = find(contents_[a].parent);
+      }
+      return contents_[a].parent;
     }
 
     void make_union(size_t a, size_t b) {
       size_t root_a = find(a);
       size_t root_b = find(b);
-
       if (contents_[root_a].rank < contents_[root_b].rank) {
         contents_[root_a].parent = root_b;
       } else if (contents_[root_a].rank > contents_[root_b].rank) {

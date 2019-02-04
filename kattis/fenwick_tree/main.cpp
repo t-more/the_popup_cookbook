@@ -19,7 +19,7 @@ int main()
         if(c == '+') {
             cin >> i >> d;
             f.update(i,d);
-        } else if(c == '?') {  
+        } else if(c == '?') {
             cin >> i;
             cout << f.sum(i) << "\n";
         }
@@ -28,4 +28,3 @@ int main()
 
     return 0;
 }
-

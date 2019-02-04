@@ -10,7 +10,7 @@ namespace popup
         return ((i)&(-i));
     }
 
-    /** 
+    /**
      *  Fenwick trees
      *  also known as Binary Indexed Trees (BIT)
      *
@@ -74,5 +74,20 @@ namespace popup
         return sum(j) - sum(i-1);
 
     }
+
+  // template <class Container, class Value, typename Operator>
+  // class GenFenwicktree {
+  //       private:
+  //           size_t m_size;
+  //           Value *m_table;
+
+  //       public:
+  //           explicit GenFenwicktree(size_t size);
+
+  //           size_t size();
+  //           void update(size_t i, Value delta);
+  //           int64_t sum(size_t i);
+  //           int64_t range_sum(size_t i, size_t j);
+  //   };
 
 } //namespace popup
