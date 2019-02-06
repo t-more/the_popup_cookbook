@@ -1,4 +1,4 @@
-# Lab 1
+# Lab 1 Marcus Östling and Tomas Möre
 ## Submissions
 * Interval cover: 3763136
 * Knapsack: 3763154
