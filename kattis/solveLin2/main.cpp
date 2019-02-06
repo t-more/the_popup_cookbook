@@ -30,17 +30,20 @@ int main() {
       }
       break;
     case popup::MULTIPLE:
-      for(auto &i : matrix) {
-        for(auto &j : i) {
-        std::cout << j << " ";
-        }
-        std::cout << std::endl;
-      }
+      // for(auto &i : matrix) {
+      //   for(auto &j : i) {
+      //   std::cout << j << " ";
+      //   }
+      //   std::cout << std::endl;
+      // }
       for(auto &i : x) {
-        std::cout << i << " ";
+        if (std::isnan(i)) {
+          std::cout << "? ";
+        } else {
+          std::cout << i << " ";
+        }
       }
-      std::cout << std::endl;
-      std::cout << "Multiple";
+      //std::cout << "Multiple";
       break;
     }
     std::cout << "\n";

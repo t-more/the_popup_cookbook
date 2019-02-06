@@ -44,6 +44,7 @@ namespace popup {
       }
 
       if (std::fabs(a[row_max][pivot_column]) < EPS) {
+
         pivot_column++;
         continue;
       }
@@ -66,7 +67,7 @@ namespace popup {
 
       rank++;
     }
-    
+
     // Check if a solution exists.
     for (int row = num_rows-1; row >= rank; row--) {
       T sum = 0;
@@ -77,19 +78,17 @@ namespace popup {
         return NONE;
       }
     }
-
     if (rank < num_rows) {
-      
+
       // Corrects the b values as it goes to correct
       // and assign it to ans
       // Back substitution (but only for b)
       ans.assign(num_rows, NAN);
       for (int row = num_rows -1; row >= 0; row--) {
-        
+
         int first_in_col_idx = -1;
         bool multiple_found = false;
         for (int col = 0; col < num_columns; col++) {
-          //printf("idx:%d val: %lf\n", col, a[row][col]);
           if (std::fabs(a[row][col]) > EPS && first_in_col_idx == -1) {
             first_in_col_idx = col;
           } else if(std::fabs(a[row][col]) > EPS) {
@@ -98,31 +97,22 @@ namespace popup {
           }
         }
 
+        for (int j = row - 1; j >= 0; j--) {
+          const auto factor = a[j][first_in_col_idx]
+            / a[row][first_in_col_idx];
+          b[j] -= b[row] * factor;
           for(int i = first_in_col_idx; i < num_columns; i++) {
-            for (int j = row - 1; j >= 0; j--) {
-              const auto factor = a[j][i]/a[row][i];
-              b[j] -= a[j][i] * factor;
-              a[j][i] = 0;
-            }
+            a[j][i] -= factor * a[row][i];
           }
+        }
 
-        if(!multiple_found && first_in_col_idx != -1) {
+        if (!multiple_found && first_in_col_idx != -1) {
           b[row] /= a[row][first_in_col_idx];
-          // One value found
-          //printf("index: %d\n", first_in_col_idx);
-          //printf("%lf %lf\n", b[row], a[row][first_in_col_idx]);
-          //b[row] /= a[row][first_in_col_idx];
-          //for (int j = row - 1; j >= 0; j--) {
-          //  const auto factor = a[j][first_in_col_idx]/a[row][first_in_col_idx];
-          //  b[j] -= a[j][first_in_col_idx] * factor;
-          //  a[j][first_in_col_idx] = 0;
-          //}
           ans[first_in_col_idx] = b[row];
-        } else {
         }
       }
       return MULTIPLE;
-    } 
+    }
 
     // Corrects the b values as it goes to correct
     // and assign it to ans
