@@ -1,4 +1,4 @@
-// Author Marcus Östling, Tomas Möre
+// Author Marcus Östling, Tomas Möre 2019
 #pragma once
 #include <numeric>
 #include <cmath>
@@ -67,7 +67,7 @@ namespace popup {
      *  Returns a new rational number.
      */
     inline Rational<V> operator+(const Rational<V>& other) const {
-      Rational<V> t(this);
+      Rational<V> t(*this);
       t += other;
       return t;
     }
@@ -99,7 +99,7 @@ namespace popup {
      * Returns the negation of this rational number.
      */
     inline Rational<V> operator-(const Rational<V>& other) const {
-      Rational<V> t(this);
+      Rational<V> t(*this);
       t -= other;
       return t;
     }
@@ -123,7 +123,7 @@ namespace popup {
      *  Returns a new rational number.
      */
     inline Rational<V> operator*(const Rational<V>& other) const {
-      Rational<V> t(this);
+      Rational<V> t(*this);
       t *= other;
       return t;
     }
@@ -146,7 +146,7 @@ namespace popup {
      *  Returns a new rational number.
      */
     inline Rational<V> operator/(const Rational<V>& other) const {
-      Rational<V> t(this);
+      Rational<V> t(*this);
       t /= other;
       return t;
     }

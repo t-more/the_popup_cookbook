@@ -1,4 +1,4 @@
-// Authors: Marcus Östling, Tomas Möre
+// Authors: Marcus Östling, Tomas Möre 2019
 #pragma once
 #include <cmath>
 #include <complex>

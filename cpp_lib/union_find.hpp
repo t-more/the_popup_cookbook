@@ -1,9 +1,11 @@
+//Authors: Tomas Möre, Marcus Östling 2019
 #pragma once
 
 #include <cstring>
 #include <stack>
 
-class UnionFind {
+namespace popup {
+  class UnionFind {
 
     struct Subset {
       size_t parent;
@@ -12,7 +14,11 @@ class UnionFind {
 
     Subset* contents_;
     size_t num_elements_;
-  public:
+    public:
+    /**
+     *  Initialize UnionFind with each element as its
+     *  own component.
+     */
     UnionFind(size_t num_elements) {
       contents_ = new Subset[num_elements];
       for (size_t i = 0; i < num_elements; i++) {
@@ -29,6 +35,9 @@ class UnionFind {
     }
 
 
+    /**
+     * Returns the root of the component that a belongs to.
+     */
     size_t find(size_t a) {
       //// 0.27 princeton
       // while (a != contents_[a].parent) {
@@ -59,6 +68,9 @@ class UnionFind {
       return contents_[a].parent;
     }
 
+    /**
+     *  Connect two components.
+     */
     void make_union(size_t a, size_t b) {
       size_t root_a = find(a);
       size_t root_b = find(b);
@@ -72,5 +84,4 @@ class UnionFind {
       }
     };
   };
-
 }

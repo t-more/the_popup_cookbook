@@ -1,4 +1,4 @@
-// Authors: Tomas Möre, Marcus Östling
+// Authors: Tomas Möre, Marcus Östling 2019
 #include <utility>
 #include <vector>
 #include <algorithm>
@@ -11,7 +11,6 @@ namespace popup {
   using range = std::pair<double, double>;
 
   range make_range(double a, double b) { return std::make_pair(a,b); }
-
 
   /**
    * This function finds the indiceis for the minimum set of intervals that
@@ -62,7 +61,7 @@ namespace popup {
       bool best_found = false;
       size_t best_idx = 0;
 
-      // Finds the
+      // Finds the interval that cover left and reaches the farthest to the right.
       for (; current != end && (ranges_begin + (*current))->first <= left; current++) {
         auto r = *(ranges_begin + (*current));
         if (r.second > best_range.second) {

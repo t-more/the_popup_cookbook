@@ -1,7 +1,7 @@
+// Author: Marcus Östling, Tomas Möre 2019
 #pragma once
-// Author: Marcus Östling, Tomas Möre
-
 #include <cstring>
+#include <cstdint>
 
 namespace popup
 {
@@ -19,8 +19,8 @@ namespace popup
      *
      *   Runtime:
      *   Create: O(n)
-     *   Compute sum: O(log n)
-     *   Update prefix sums: O(log n)
+     *   Compute prefix sum: O(log n)
+     *   Update prefix sum: O(log n)
      */
     class Fenwicktree {
         private:
@@ -36,6 +36,10 @@ namespace popup
             int64_t range_sum(size_t i, size_t j);
     };
 
+    /**
+     *  Constructor that initialize the fenwick tree of
+     *  a given size.
+     */
     Fenwicktree::Fenwicktree(size_t size) {
         // General idea of fenwick trees does not include
         // index 0, so for the sake of the lab...
@@ -44,11 +48,14 @@ namespace popup
         std::memset(m_table, 0, m_size*sizeof(int));
     }
 
-
     size_t Fenwicktree::size() {
         return m_size;
     }
 
+    /**
+     *  Updates the value of an index in the fenwick tree.
+     *  O(logn)
+     */
     void Fenwicktree::update(size_t i, int64_t delta)
     {
         // General idea of fenwick trees does not include
@@ -60,6 +67,10 @@ namespace popup
         }
     }
 
+    /**
+     * Returns the prefix sum of [0, i).
+     * O(logn)
+     */
     int64_t Fenwicktree::sum(size_t i){
         int64_t sum = 0;
         while (i > 0) {
@@ -68,26 +79,5 @@ namespace popup
         }
         return sum;
     }
-
-
-    int64_t Fenwicktree::range_sum(size_t i, size_t j) {
-        return sum(j) - sum(i-1);
-
-    }
-
-  // template <class Container, class Value, typename Operator>
-  // class GenFenwicktree {
-  //       private:
-  //           size_t m_size;
-  //           Value *m_table;
-
-  //       public:
-  //           explicit GenFenwicktree(size_t size);
-
-  //           size_t size();
-  //           void update(size_t i, Value delta);
-  //           int64_t sum(size_t i);
-  //           int64_t range_sum(size_t i, size_t j);
-  //   };
 
 } //namespace popup

@@ -1,5 +1,4 @@
 // Authors: Tomas Möre, Marcus Östling 2019
-
 #include <iostream>
 #include <vector>
 #include <numeric>

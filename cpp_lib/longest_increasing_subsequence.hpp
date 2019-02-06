@@ -1,4 +1,4 @@
-// Authors: Marcus Östling, Tomas Möre
+// Authors: Marcus Östling, Tomas Möre 2019
 #include <limits>
 #include <cstring>
 #include <algorithm>
