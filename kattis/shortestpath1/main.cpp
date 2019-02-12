@@ -1,6 +1,6 @@
 #include <iostream>
 #include "graph.hpp"
-
+#include <cassert>
 
 int main() {
   int num_nodes, num_edges, num_queries, starting_node;

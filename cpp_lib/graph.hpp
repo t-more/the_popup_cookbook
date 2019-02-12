@@ -67,7 +67,6 @@ namespace popup {
 
 
     // This part specifies generic algorithms on graphs
-
     // Bfs function will terminate when f returns false
     void bfs(size_t start, std::function<bool(size_t)> f);
 
@@ -174,12 +173,8 @@ namespace popup {
     };
 
     virtual bool add_edge(size_t from, size_t to, T weight) {
-      auto existing = get_weight(from, to);
-      if(!existing.has_value()) {
         list_[from].emplace_back(Edge<T>(from, to, weight));
         return true;
-      }
-      return false;
     };
   };
 } // namespace popup
