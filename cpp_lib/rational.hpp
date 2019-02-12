@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iostream>
 
+
 namespace popup {
 
   /**
@@ -173,4 +174,36 @@ namespace popup {
   inline Rational<V> abs(const Rational<V>& a) {
     return Rational<V>(std::abs(a.numenator()),a.denominator());
   }
+
+
+
+  // (x:%y) <= (x':%y')  =  x * y' <= x' * y
+  //  (x:%y) <  (x':%y')  =  x * y' <  x' * y
+}
+
+template <class V>
+inline bool operator>(const popup::Rational<V>& a, const popup::Rational<V>& b) {
+  return !(a<=b);
+}
+
+template <class V>
+inline bool operator<(const popup::Rational<V>& a, const popup::Rational<V>& b) {
+  return a.numenator() * b.denominator() < b.numenator() * a.denominator();
+}
+template <class V>
+inline bool operator<=(const popup::Rational<V>& a, const popup::Rational<V>& b) {
+  return a.numenator() * b.denominator() <= b.numenator() * a.denominator();
+}
+template <class V>
+inline bool operator==(const popup::Rational<V>& a, const popup::Rational<V>& b) {
+  return a.numenator() == b.numenator() && a.denominator() == b.denominator();
+}
+
+namespace std {
+
+  template<typename T>
+  popup::Rational<T> fabs(const popup::Rational<T>& r) {
+    return popup::abs(r);
+  }
+
 }

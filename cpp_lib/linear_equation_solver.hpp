@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <numeric>
 
-#define EPS 1e-12
+#define EPS 0
 
 namespace popup {
 
@@ -75,7 +75,7 @@ namespace popup {
 
       rank++;
     }
-    
+
     // Check if a solution exists.
     for (int row = num_rows-1; row >= rank; row--) {
       T sum = 0;
