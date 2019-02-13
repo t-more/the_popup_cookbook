@@ -1,3 +1,4 @@
+#include <iostream>
 #include <functional>
 #include <optional>
 #include <vector>
@@ -6,6 +7,7 @@
 #include <queue>
 #include <limits>
 #include <algorithm>
+#include <variant>
 
 namespace popup {
 
@@ -14,6 +16,7 @@ namespace popup {
     size_t from_;
     size_t to_;
     T weight_;
+
   public:
     Edge(size_t from, size_t to, T weight) {
       from_ = from;
@@ -28,7 +31,7 @@ namespace popup {
       return to_;
     }
 
-    T& weight() {
+    T weight() const {
       return weight_;
     }
   };
@@ -38,7 +41,50 @@ namespace popup {
   protected:
     size_t size_;
     size_t capacity_;
+        std::vector<std::vector<Edge<T>>> list_;
   public:
+    Graph(size_t capacity) {
+      capacity_ = capacity;
+      size_ = 0;
+      list_ = std::vector<std::vector<Edge<T>>>(Graph<T>::capacity_, std::vector<Edge<T>>());
+    }
+
+     std::optional<T> get_weight(size_t from, size_t to) {
+      size_t a = to;
+      auto iter = std::find_if(list_[from].begin(), list_[from].end(),
+                            [&](const Edge<T> e){
+                              return e.to() == a;
+                            });
+      if (iter == std::end(list_[from])) {
+        return std::nullopt;
+      } else {
+        return std::make_optional(iter->weight());
+      }
+    };
+
+     void traverse_neighbors(size_t from, std::function<void(size_t, const T&)> f) {
+      for(auto e : list_[from]) {
+        f(e.to(), e.weight());
+      }
+    };
+
+     void traverse_edges(std::function<void(Edge<T>&)> f) {
+      for(auto &outer : list_) {
+        for(auto &inner : outer) {
+          f(inner);
+        }
+      }
+    };
+    void add_bi_edge(size_t from, size_t to, T weight) {
+      add_edge(from, to, weight);
+      add_edge(to, from, weight);
+    };
+
+     bool add_edge(size_t from, size_t to, T weight) {
+        list_[from].emplace_back(Edge<T>(from, to, weight));
+        return true;
+    };
+
     size_t get_size() {
       return size_;
     }
@@ -46,23 +92,14 @@ namespace popup {
       return capacity_;
     }
 
-    virtual std::optional<T> get_weight(size_t from, size_t to)=0;
-    virtual void set_weight(size_t from, size_t to, T weight) {
+
+    void set_weight(size_t from, size_t to, T weight) {
       auto opt_weight = get_weight(from, to);
       if (opt_weight) {
         opt_weight = weight;
       } else {
         assert(false); // opt_weight should always have a value.
       }
-    };
-
-    virtual void traverse_neighbors(size_t node, std::function<void(size_t, const T&)> f)=0;
-    virtual void traverse_edges(std::function<void(Edge<T>&)> f)=0;
-    virtual bool add_edge(size_t from, size_t to, T weight)=0;
-    //    virtual void get_edge(size_t from, size_t to)=0;
-    virtual void add_bi_edge(size_t from, size_t to, T weight) {
-      add_edge(from, to, weight);
-      add_edge(to, from, weight);
     };
 
 
@@ -101,16 +138,17 @@ namespace popup {
           break;
         }
 
-        traverse_neighbors(current_node,
-                           [&](size_t node, const T& weight){
-                             auto node_dist = distances[node];
-                             auto alt_dist = weight + cost;
-                             if (node_dist > alt_dist) {
-                               distances[node] = alt_dist;
-                               came_from[node] = current_node;
-                               queue.emplace(std::make_pair(node, alt_dist));
-                             }
-                           });
+        for (const auto& edge : list_[current_node]) {
+          auto node = edge.to();
+          const auto weight = edge.weight();
+          auto node_dist = distances[node];
+          auto alt_dist = weight + cost;
+          if (node_dist > alt_dist) {
+            distances[node] = alt_dist;
+            came_from[node] = current_node;
+            queue.emplace(std::make_pair(node, alt_dist));
+          }
+        }
       }
 
       if (!visited[to])  {
@@ -128,53 +166,74 @@ namespace popup {
       }
     };
 
-    // Bellman ford
-    void bellman_ford(size_t from, size_t to);
+    // Bellman ford returns a variant of either the result or a bool. If the
+    // boolean is set to true if there simply was no path. It is false if a
+    // negative cycle was detected.  If the pair is returned it contains the
+    // shortest path as a vector and the weight of going there.
+    std::variant<bool, std::pair<std::vector<size_t>, T>> bellman_ford(size_t from, size_t to) {
+      std::vector<T> distances(capacity_, std::numeric_limits<T>::max());
+      // size_t::max() is the value representing that a node never has been viewed
+      std::vector<size_t> came_from(capacity_, std::numeric_limits<size_t>::max());
+
+      distances[from] = 0;
+
+      for (int i = 0; i < capacity_; i++) {
+        for (int node = 0; node < capacity_; node++) {
+          for (const auto& edge : list_[node]) {
+            T trav_cost = distances[edge.from()] + edge.weight();
+            if (distances[edge.from()] == std::numeric_limits<T>::max()) {
+              continue;
+            }
+            //std::cerr << trav_cost << std::endl;
+            if (trav_cost < distances[edge.to()]) {
+              came_from[edge.to()] = edge.from();
+              distances[edge.to()] = trav_cost;
+            }
+          }
+        }
+      }
+
+      std::vector<bool> in_inf(capacity_, false);
+      for (int node = 0; node < capacity_; node++) {
+        for (const auto& edge : list_[node]) {
+          T trav_cost = distances[edge.from()] + edge.weight();
+          if (distances[edge.from()] == std::numeric_limits<T>::max()) {
+            trav_cost = std::numeric_limits<T>::max();
+          }
+          if (trav_cost < distances[edge.to()]) {
+            in_inf[edge.to()] = true;
+            in_inf[edge.from()] = true;
+            //            return false;
+          }
+        }
+      }
+
+      if (came_from[to] == std::numeric_limits<size_t>::max()) {
+        return true;
+      } else {
+        T final_weight = distances[to];
+
+        std::vector<size_t> shortest_path;
+        size_t current = to;
+        if (in_inf[from]) {
+          return false;
+        }
+        while (current != from) {
+          if (in_inf[current]) {
+            return false;
+          }
+
+          //shortest_path.push_back(came_from[current]);
+          current = came_from[current];
+        }
+
+        std::reverse(shortest_path.begin(), shortest_path.end());
+        return std::make_pair(shortest_path, final_weight);
+      }
+    }
 
     void all_pairs_shortest_paths();
 
   };
 
-  template <class T>
-  class ListGraph : public Graph<T> {
-    std::vector<std::vector<Edge<T>>> list_;
-  public:
-    ListGraph(size_t capacity) {
-      Graph<T>::capacity_ = capacity;
-      Graph<T>::size_ = 0;
-      list_ = std::vector<std::vector<Edge<T>>>(Graph<T>::capacity_, std::vector<Edge<T>>());
-    }
-
-    virtual std::optional<T> get_weight(size_t from, size_t to) {
-      size_t a = to;
-      auto iter = std::find_if(list_[from].begin(), list_[from].end(),
-                            [&](const Edge<T> e){
-                              return e.to() == a;
-                            });
-      if (iter == std::end(list_[from])) {
-        return std::nullopt;
-      } else {
-        return std::make_optional(iter->weight());
-      }
-    };
-
-    virtual void traverse_neighbors(size_t from, std::function<void(size_t, const T&)> f) {
-      for(auto e : list_[from]) {
-        f(e.to(), e.weight());
-      }
-    };
-
-    virtual void traverse_edges(std::function<void(Edge<T>&)> f) {
-      for(auto &outer : list_) {
-        for(auto &inner : outer) {
-          f(inner);
-        }
-      }
-    };
-
-    virtual bool add_edge(size_t from, size_t to, T weight) {
-        list_[from].emplace_back(Edge<T>(from, to, weight));
-        return true;
-    };
-  };
 } // namespace popup
