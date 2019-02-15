@@ -51,9 +51,11 @@ namespace popup {
     //
     std::unordered_map<
       size_t,
-      std::pair<std::shared_ptr<std::vector<T>>,
-                std::shared_ptr<std::vector<size_t>>>
-      > cache_;
+      std::tuple<
+            std::shared_ptr<std::vector<T>>,
+            std::shared_ptr<std::vector<size_t>>,
+            std::shared_ptr<std::vector<bool>>
+      >> cache_;
   public:
     Graph(size_t capacity) {
       capacity_ = capacity;
@@ -191,17 +193,21 @@ namespace popup {
       size_t from,
       size_t to
     ) {
+      // Asking for a element outside the graph
+      if(to >= capacity_)
+          return true;
+
       std::shared_ptr<std::vector<T>> distances;
       std::shared_ptr<std::vector<size_t>> came_from;
+      std::shared_ptr<std::vector<bool>> in_inf;
       auto cached = cache_.find(from);
       bool cache_exists = cache_.find(from) != cache_.end();
 
       if (!graph_modified_ && cache_exists) {
-
-        distances = cached->second.first;
-        came_from = cached->second.second;
+        distances = std::get<0>(cached->second);
+        came_from = std::get<1>(cached->second);
+        in_inf = std::get<2>(cached->second);
       } else {
-
         if (graph_modified_) {
           cache_.clear();
           graph_modified_ = false;
@@ -215,17 +221,21 @@ namespace popup {
           capacity_,
           std::numeric_limits<size_t>::max()
         );
+        in_inf = std::make_shared<std::vector<bool>>(
+          capacity_,
+          false
+        );
 
         (*distances)[from] = 0;
+        (*came_from)[from] = from;
         // Main bellman-ford part
-        for (int i = 0; i < capacity_ - 1; i++) {
-          for (int node = 0; node < capacity_; node++) {
+        for (int i = 0; i < (int)capacity_ - 1; i++) {
+          for (int node = 0; node < (int)capacity_; node++) {
             for (const auto& edge : list_[node]) {
               if ((*distances)[edge.from()] == std::numeric_limits<T>::max()) {
                 continue;
               }
               T trav_cost = (*distances)[edge.from()] + edge.weight();
-              //std::cerr << trav_cost << std::endl;
               if (trav_cost < (*distances)[edge.to()]) {
                 (*came_from)[edge.to()] = edge.from();
                 (*distances)[edge.to()] = trav_cost;
@@ -235,15 +245,15 @@ namespace popup {
         }
 
         // Identify nodes part of infinite cycles byt setting
-        for (int node = 0; node < capacity_; node++) {
+        for (int node = 0; node < (int)capacity_; node++) {
           for (const auto& edge : list_[node]) {
             T trav_cost = (*distances)[edge.from()] + edge.weight();
             if ((*distances)[edge.from()] == std::numeric_limits<T>::max()) {
               trav_cost = std::numeric_limits<T>::max();
             }
             if (trav_cost < (*distances)[edge.to()]) {
-              (*came_from)[edge.to()] = std::numeric_limits<size_t>::max() - 1;
-              (*came_from)[edge.from()] = std::numeric_limits<size_t>::max() -1;
+              (*in_inf)[edge.to()] = true;
+              (*in_inf)[edge.from()] = true;
             }
           }
         }
@@ -251,7 +261,7 @@ namespace popup {
         cache_.insert(
           std::make_pair(
             from,
-            std::make_pair(distances, came_from))
+            std::make_tuple(distances, came_from, in_inf))
         );
       }
 
@@ -262,12 +272,12 @@ namespace popup {
 
         std::vector<size_t> shortest_path;
         size_t current = to;
-        if ((*came_from)[from] == std::numeric_limits<size_t>::max() - 1) {
+        if ((*in_inf)[from]) {
           return false;
         }
 
         while (current != from) {
-          if ((*came_from)[current] == std::numeric_limits<size_t>::max() - 1) {
+          if ((*in_inf)[current]) {
             return false;
           }
           //shortest_path.push_back(came_from[current]);
