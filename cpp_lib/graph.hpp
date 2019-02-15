@@ -8,6 +8,8 @@
 #include <limits>
 #include <algorithm>
 #include <variant>
+#include <unordered_map>
+#include <memory>
 
 namespace popup {
 
@@ -15,7 +17,7 @@ namespace popup {
 
   class Edge {
     size_t from_ = 0;
-    size_t to_ = 0;
+    size_t to_ = 0 ;
     T weight_ = 0;
 
   public:
@@ -45,11 +47,21 @@ namespace popup {
     size_t size_;
     size_t capacity_;
     std::vector<std::vector<Edge<T>>> list_;
+    bool graph_modified_ = false;
+    //
+    std::unordered_map<
+      size_t,
+      std::pair<std::shared_ptr<std::vector<T>>,
+                std::shared_ptr<std::vector<size_t>>>
+      > cache_;
   public:
     Graph(size_t capacity) {
       capacity_ = capacity;
       size_ = 0;
-      list_ = std::vector<std::vector<Edge<T>>>(Graph<T>::capacity_, std::vector<Edge<T>>());
+      list_ = std::vector<std::vector<Edge<T>>>(
+        Graph<T>::capacity_,
+        std::vector<Edge<T>>()
+      );
     }
 
     std::optional<T> get_weight(size_t from, size_t to) {
@@ -84,6 +96,7 @@ namespace popup {
     };
 
     bool add_edge(size_t from, size_t to, T weight) {
+      graph_modified_ = true;
       list_[from].emplace_back(Edge<T>(from, to, weight));
       return true;
     };
@@ -95,8 +108,8 @@ namespace popup {
       return capacity_;
     }
 
-
     void set_weight(size_t from, size_t to, T weight) {
+      graph_modified_ = true;
       auto opt_weight = get_weight(from, to);
       if (opt_weight) {
         opt_weight = weight;
@@ -173,65 +186,92 @@ namespace popup {
     // boolean is set to true if there simply was no path. It is false if a
     // negative cycle was detected.  If the pair is returned it contains the
     // shortest path as a vector and the weight of going there.
-    std::variant<bool, std::pair<std::vector<size_t>, T>> bellman_ford(
-      std::vector<Edge<T>>& es,
+    std::variant<bool, std::pair<std::vector<size_t>, T>>
+    bellman_ford(
       size_t from,
       size_t to
     ) {
-      std::vector<T> distances(capacity_, std::numeric_limits<T>::max());
-      std::vector<size_t> came_from(capacity_, std::numeric_limits<size_t>::max());
+      std::shared_ptr<std::vector<T>> distances;
+      std::shared_ptr<std::vector<size_t>> came_from;
+      auto cached = cache_.find(from);
+      bool cache_exists = cache_.find(from) != cache_.end();
 
-      distances[from] = 0;
+      if (!graph_modified_ && cache_exists) {
 
-      for (int i = 0; i < capacity_ - 1; i++) {
-        for (const auto& edge : es) {
-          if (distances[edge.from()] == std::numeric_limits<T>::max()) {
-            continue;
-          }
-          T trav_cost = distances[edge.from()] + edge.weight();
-          //std::cerr << trav_cost << std::endl;
-          if (trav_cost < distances[edge.to()]) {
-            came_from[edge.to()] = edge.from();
-            distances[edge.to()] = trav_cost;
+        distances = cached->second.first;
+        came_from = cached->second.second;
+      } else {
+
+        if (graph_modified_) {
+          cache_.clear();
+          graph_modified_ = false;
+        }
+
+        distances = std::make_shared<std::vector<T>>(
+          capacity_,
+          std::numeric_limits<T>::max()
+        );
+        came_from = std::make_shared<std::vector<size_t>>(
+          capacity_,
+          std::numeric_limits<size_t>::max()
+        );
+
+        (*distances)[from] = 0;
+        // Main bellman-ford part
+        for (int i = 0; i < capacity_ - 1; i++) {
+          for (int node = 0; node < capacity_; node++) {
+            for (const auto& edge : list_[node]) {
+              if ((*distances)[edge.from()] == std::numeric_limits<T>::max()) {
+                continue;
+              }
+              T trav_cost = (*distances)[edge.from()] + edge.weight();
+              //std::cerr << trav_cost << std::endl;
+              if (trav_cost < (*distances)[edge.to()]) {
+                (*came_from)[edge.to()] = edge.from();
+                (*distances)[edge.to()] = trav_cost;
+              }
+            }
           }
         }
+
+        // Identify nodes part of infinite cycles byt setting
+        for (int node = 0; node < capacity_; node++) {
+          for (const auto& edge : list_[node]) {
+            T trav_cost = (*distances)[edge.from()] + edge.weight();
+            if ((*distances)[edge.from()] == std::numeric_limits<T>::max()) {
+              trav_cost = std::numeric_limits<T>::max();
+            }
+            if (trav_cost < (*distances)[edge.to()]) {
+              (*came_from)[edge.to()] = std::numeric_limits<size_t>::max() - 1;
+              (*came_from)[edge.from()] = std::numeric_limits<size_t>::max() -1;
+            }
+          }
+        }
+
+        cache_.insert(
+          std::make_pair(
+            from,
+            std::make_pair(distances, came_from))
+        );
       }
 
-
-      std::vector<bool> in_inf(capacity_, false);
-      for (const auto& edge : es) {
-        T trav_cost = distances[edge.from()] + edge.weight();
-        if (distances[edge.from()] == std::numeric_limits<T>::max()) {
-          trav_cost = std::numeric_limits<T>::max();
-        }
-        if (trav_cost < distances[edge.to()]) {
-          in_inf[edge.to()] = true;
-          in_inf[edge.from()] = true;
-          //            return false;
-        }
-      }
-
-
-      if (came_from[to] == std::numeric_limits<size_t>::max()) {
+      if ((*came_from)[to] == std::numeric_limits<size_t>::max()) {
         return true;
       } else {
-        T final_weight = distances[to];
+        T final_weight = (*distances)[to];
 
         std::vector<size_t> shortest_path;
         size_t current = to;
-        if (in_inf[from]) {
+        if ((*came_from)[from] == std::numeric_limits<size_t>::max() - 1) {
           return false;
         }
-        int loops = 999;
-        while (current != from) {
-          assert(loops--);
 
-          if (in_inf[current]) {
+        while (current != from) {
+          if ((*came_from)[current] == std::numeric_limits<size_t>::max() - 1) {
             return false;
           }
-
           //shortest_path.push_back(came_from[current]);
-          current = came_from[current];
+          current = (*came_from)[current];
         }
 
         std::reverse(shortest_path.begin(), shortest_path.end());
