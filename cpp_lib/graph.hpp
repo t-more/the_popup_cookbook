@@ -10,42 +10,48 @@
 #include <variant>
 #include <unordered_map>
 #include <memory>
+#include "union_find.hpp"
 
 namespace popup {
 
-  template <class T>
+    template <class T>
 
-  class Edge {
-    size_t from_ = 0;
-    size_t to_ = 0 ;
-    T weight_ = 0;
+    class Edge {
+        size_t from_ = 0;
+        size_t to_ = 0;
+        T weight_ = 0;
 
-  public:
-    Edge() {
-    }
-    Edge(size_t from, size_t to, T weight) {
-      from_ = from;
-      to_ = to;
-      weight_ = weight;
-    }
-    size_t from() const {
-      return from_;
-    }
+    public:
+        Edge() {
+        }
+        Edge(size_t from, size_t to, T weight) {
+            from_ = from;
+            to_ = to;
+            weight_ = weight;
+        }
+        inline size_t from() const {
+            return from_;
+        }
 
-    size_t to() const {
-      return to_;
-    }
+        inline size_t to() const {
+            return to_;
+        }
 
-    T weight() const {
-      return weight_;
-    }
+        inline T weight() const {
+            return weight_;
+        }
+        inline bool operator<(Edge<T> o) {
+            return weight_ < o.weight_;
+        }
   };
 
   template <class T>
   class Graph {
   protected:
-    size_t size_;
-    size_t capacity_;
+      size_t size_ = 0;
+      size_t capacity_;
+      size_t num_edges_ = 0;
+
     std::vector<std::vector<Edge<T>>> list_;
     bool graph_modified_ = false;
     //
@@ -59,7 +65,6 @@ namespace popup {
   public:
     Graph(size_t capacity) {
       capacity_ = capacity;
-      size_ = 0;
       list_ = std::vector<std::vector<Edge<T>>>(
         Graph<T>::capacity_,
         std::vector<Edge<T>>()
@@ -100,6 +105,7 @@ namespace popup {
     bool add_edge(size_t from, size_t to, T weight) {
       graph_modified_ = true;
       list_[from].emplace_back(Edge<T>(from, to, weight));
+      num_edges_++;
       return true;
     };
 
@@ -202,7 +208,6 @@ namespace popup {
       std::shared_ptr<std::vector<bool>> in_inf;
       auto cached = cache_.find(from);
       bool cache_exists = cache_.find(from) != cache_.end();
-
       if (!graph_modified_ && cache_exists) {
         distances = std::get<0>(cached->second);
         came_from = std::get<1>(cached->second);
@@ -229,7 +234,7 @@ namespace popup {
         (*distances)[from] = 0;
         (*came_from)[from] = from;
         // Main bellman-ford part
-        for (int i = 0; i < (int)capacity_ - 1; i++) {
+        for (int i = 0; i <= (int)capacity_ + 2000; i++) {
           for (int node = 0; node < (int)capacity_; node++) {
             for (const auto& edge : list_[node]) {
               if ((*distances)[edge.from()] == std::numeric_limits<T>::max()) {
@@ -245,18 +250,21 @@ namespace popup {
         }
 
         // Identify nodes part of infinite cycles byt setting
+
+
         for (int node = 0; node < (int)capacity_; node++) {
-          for (const auto& edge : list_[node]) {
-            T trav_cost = (*distances)[edge.from()] + edge.weight();
-            if ((*distances)[edge.from()] == std::numeric_limits<T>::max()) {
-              trav_cost = std::numeric_limits<T>::max();
+            for (const auto& edge : list_[node]) {
+                if ((*distances)[edge.from()] == std::numeric_limits<T>::max()) {
+                    continue;
+                }
+                T trav_cost = (*distances)[edge.from()] + edge.weight();
+                if (trav_cost < (*distances)[edge.to()]) {
+                    (*in_inf)[edge.from()] = true;
+                    (*in_inf)[edge.to()] = true;
+                }
             }
-            if (trav_cost < (*distances)[edge.to()]) {
-              (*in_inf)[edge.to()] = true;
-              (*in_inf)[edge.from()] = true;
-            }
-          }
         }
+
 
         cache_.insert(
           std::make_pair(
@@ -272,15 +280,23 @@ namespace popup {
 
         std::vector<size_t> shortest_path;
         size_t current = to;
+
         if ((*in_inf)[from]) {
           return false;
         }
-
+        //        std::cerr << "STARTING AT CURRENT: " << current << "\n";
+        //        std::cerr << "ADS: " << (*came_from)[from] << std::endl;
+        if (current == from && (*came_from)[from] != from) {
+            //            std::cerr << "HERE\n";
+            return false;
+        }
         while (current != from) {
+            //            std::cerr << "HERE\n";
           if ((*in_inf)[current]) {
             return false;
           }
-          //shortest_path.push_back(came_from[current]);
+          //          std::cerr << current <<"-";
+          shortest_path.push_back((*came_from)[current]);
           current = (*came_from)[current];
         }
 
@@ -289,7 +305,69 @@ namespace popup {
       }
     }
 
-    void all_pairs_shortest_paths();
+
+      std::vector<std::vector<T>> all_pairs_shortest_paths() {
+
+          std::vector<std::vector<T>> result(capacity_, std::vector<T>(capacity_, std::numeric_limits<T>::max()));
+
+          // Assing initial edge costs
+          for (auto& inner : list_) {
+              for (auto& edge : inner) {
+                  result[edge.from()][edge.to()] = std::min(result[edge.from()][edge.to()], edge.weight());
+              }
+          }
+
+          // Any non assigned self loops are kept
+          for (int d = 0; d < capacity_; d++) {
+              if (result[d][d] > 0) {
+                  result[d][d] = 0;
+              }
+          }
+
+          // Main meat of the floyd warshall
+          for (int k = 0; k < capacity_; k++) {
+              for (int i = 0; i < capacity_; i++) {
+                  for (int j = 0; j < capacity_; j++) {
+                      if (result[i][k] != std::numeric_limits<T>::max()
+                          && result[k][j] != std::numeric_limits<T>::max())
+                      {
+                          result[i][j]  = std::min(result[i][j], result[i][k] + result[k][j]);
+                      }
+                  }
+              }
+          }
+          return result;
+      }
+
+      std::optional<std::pair<T,std::vector<Edge<T>>>> kruskal() {
+          std::vector<Edge<T>> all_edges(num_edges_);
+          int total_edge_count = 0;
+          for (auto& edges : list_) {
+              for (auto& edge : edges) {
+                  all_edges[total_edge_count++] = edge;
+              }
+          }
+          std::sort(all_edges.begin(), all_edges.end());
+          popup::UnionFind uf(capacity_);
+
+          std::vector<Edge<T>> result(capacity_ - 1);
+
+          // Dis issss kruskaaaal
+          int mst_edge_count = 0;
+          T cost = 0;
+          for (auto& edge : all_edges) {
+              if (uf.find(edge.from()) != uf.find(edge.to())) {
+
+                  cost += edge.weight();
+                  uf.make_union(edge.from(), edge.to());
+                  result[mst_edge_count++] = edge;
+                  if (mst_edge_count >= capacity_ -1) {
+                      return std::make_pair(cost, result);
+                  }
+              }
+          }
+          return std::nullopt;
+      }
 
   };
 
