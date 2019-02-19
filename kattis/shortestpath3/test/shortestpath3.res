@@ -11,10 +11,20 @@ Impossible
 
 Impossible
 
-Impossible
-Impossible
-Impossible
+0
 -Infinity
 -Infinity
 -Infinity
+
+1
+2
+-Infinity
+
+Impossible
+
+-Infinity
+
+-Infinity
+
+0
 
