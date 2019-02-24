@@ -15,21 +15,17 @@ int main() {
       std::cin >> from >> to >> weight;
       g.add_edge(from, to, weight);
     }
+    auto res = g.bellman_ford(starting_node);
 
     for (int q = 0; q < num_queries; q++) {
       int to;
       std::cin >> to;
-      auto res = g.bellman_ford(starting_node, to);
-
-      if (std::holds_alternative<bool>(res)) {
-        if (std::get<bool>(res)) {
+      if (!res->reachable(to)){
           std::cout << "Impossible\n";
-        } else {
+      } else if (res->contains_cycles(to)) {
           std::cout << "-Infinity\n";
-        }
       } else {
-        auto elem = std::get<std::pair<std::vector<size_t>, int64_t>>(res);
-        std::cout << elem.second << "\n";
+          std::cout << res->distance_to(to).value() << "\n";
       }
     }
     std::cout << "\n";

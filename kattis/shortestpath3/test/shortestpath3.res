@@ -26,5 +26,5 @@ Impossible
 
 -Infinity
 
-0
+-Infinity
 
