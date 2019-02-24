@@ -4,6 +4,8 @@
 #include <optional>
 #include <limits>
 #include <algorithm>
+#include <cassert>
+#include <functional>
 
 namespace popup {
     template <typename Flow, typename Weight>
@@ -51,8 +53,12 @@ namespace popup {
             return flow_;
         }
 
+        Flow weight() const {
+            return weight_;
+        }
+
         void increase_flow(Flow f) {
-            flow_ += f;   
+            flow_ += f;
             opposite_edge_->flow_ -= f;
         }
 
@@ -109,15 +115,14 @@ namespace popup {
 
         // BFS to find the shortest path (in number of edges) from source to
         // sink. If this isn't possible it will return false, otherwie true.
-        Flow min_edge_path(
-                size_t source, 
-                size_t sink, 
-                std::vector<Edge<Flow, Weight>*>& came_from
+        std::pair<Flow, Weight> bfs(
+                size_t source,
+                size_t sink,
+                std::vector<Edge<Flow, Weight>*> &came_from
                 ) {
-            static std::vector<bool> visited(num_nodes_, false);
-            static std::vector<Flow> min_residual(num_nodes_, std::numeric_limits<Flow>::max());
-            std::fill(visited.begin(), visited.end(), false);
-            std::fill(min_residual.begin(), min_residual.end(), std::numeric_limits<Flow>::max());
+            std::vector<bool> visited(num_nodes_, false);
+            std::vector<Flow> min_residual(num_nodes_, std::numeric_limits<Flow>::max());
+
             if (came_from.size() < num_nodes_) {
                 came_from.resize(num_nodes_);
             }
@@ -128,6 +133,7 @@ namespace popup {
             while (!queue.empty()) {
                 auto current_node = queue.front();
                 queue.pop();
+                visited[current_node] = true;
 
                 for (const auto edge : list_[current_node]) {
                     if(edge->residual() <= 0) {
@@ -136,37 +142,144 @@ namespace popup {
 
                     if (edge->to() == sink) {
                         came_from[sink] = edge;
-                        return std::min(min_residual[current_node], edge->residual());
+                        return std::make_pair(std::min(min_residual[current_node], edge->residual()), 0);
                     }
 
                     if (!visited[edge->to()]) {
                         came_from[edge->to()] = edge;
-                        min_residual[edge->to()] = 
+                        min_residual[edge->to()] =
                             std::min(min_residual[current_node], edge->residual());
                         queue.push(edge->to());
-                        visited[current_node] = true;
+                        visited[edge->to()] = true;
                     }
                 }
             }
-            return 0;
+            return std::make_pair(0, 0);
         }
 
+        std::pair<Flow, Weight> dijkstra(
+            size_t from,
+            size_t to,
+            std::vector<Edge<Flow, Weight>*> &came_from
+        ) {
+            const auto cmp = [](const std::pair<Edge<Flow,Weight>*, Flow>& a,
+                                const std::pair<Edge<Flow,Weight>*, Flow>& b) {
+                                 return a.second > b.second;
+                             };
+
+            std::priority_queue<
+                std::pair<Edge<Flow,Weight>*, Weight>,
+                std::vector<std::pair<Edge<Flow,Weight>*, Weight>>,
+                decltype(cmp)> queue(cmp);
+            std::vector<Weight> distances(num_nodes_, std::numeric_limits<Weight>::max());
+            std::vector<bool> visited(num_nodes_, false);
+            std::vector<Flow> min_residual(num_nodes_, std::numeric_limits<Flow>::max());
+
+            distances[from] = 0;
+            Edge<Flow, Weight> dummy_edge = Edge<Flow, Weight>(-1,from,std::numeric_limits<Flow>::max(), 0);
+            queue.emplace(std::make_pair(&dummy_edge,0));
+            came_from[from] = &dummy_edge;
+
+            while (!queue.empty()) {
+                auto e = queue.top();
+                queue.pop();
+                auto current_edge = e.first;
+                auto current_node = current_edge->to();
+                if (visited[current_node]) {
+                    continue;
+                }
+
+                //                std::cerr << min_residual[came_from[current_node]->from()] << " " << current_edge->residual() << std::endl;
+                min_residual[current_node] = std::min(
+                    min_residual[current_edge->from()],
+                    current_edge->residual()
+                );
+
+                visited[current_node] = true;
+                auto cost = distances[current_node];
+
+                if (current_node == to) {
+                    break;
+                }
+
+                for (const auto edge : list_[current_node]) {
+                    if (edge->residual() > 0) {
+                        auto node = edge->to();
+                        const auto weight = edge->weight();
+                        auto node_dist = distances[node];
+                        auto alt_dist = weight + cost;
+                        //                        std::cerr << alt_dist << std::endl;
+                        if (node_dist > alt_dist) {
+                            distances[node] = alt_dist;
+                            came_from[node] = edge;
+                            queue.emplace(std::make_pair(edge, alt_dist));
+                        }
+                    }
+                }
+            }
+            {
+                auto ce = came_from[to];
+                while (ce != &dummy_edge) {
+                    std::cerr << ce->to() << " ";
+                    ce = came_from[ce->from()];
+                }
+                std::cerr << "\n";
+            }
+            //std::cerr << "RUN\n" ;
+            if (!visited[to])  {
+                return std::make_pair(0, 0);
+            } else {
+                return std::make_pair(min_residual[to], distances[to]);
+            }
+        };
+
+
+
         // Modifies graph
-        void edmond_karp(size_t source, size_t sink) {
+        std::pair<Flow, Weight> ford_fulkerson(
+            size_t source,
+            size_t sink,
+            std::function<std::pair<Flow,Weight>(size_t, size_t, std::vector<Edge<Flow, Weight>*>&)> path_algo
+        ) {
             std::vector<Edge<Flow, Weight>*> came_from(num_nodes_, nullptr);
-            
-            Flow min_residual;
-            while ((min_residual = min_edge_path(source, sink, came_from))) {
+            Flow flow = 0;
+            Weight cost = 0;
+            for (std::pair<Flow, Weight> res = path_algo(source, sink, came_from);
+                 res.first > 0;
+                 res = path_algo(source, sink, came_from)) {
+
                 size_t current_node = sink;
+                flow += res.first;
+                cost += res.first * res.second;
+                std::cerr << "rf: " << res.first <<  " rs: "<<res.second <<  std::endl;
+
                 while (current_node != source) {
                     const auto edge = came_from[current_node];
-                    edge->increase_flow(min_residual);
+                    edge->increase_flow(res.first);
                     current_node = edge->from();
                 }
             }
+            return std::make_pair(flow,cost);
+        }
+
+
+        std::pair<Flow, Weight> min_cost_max_flow(size_t source, size_t sink) {
+            using namespace std::placeholders;
+            return ford_fulkerson(
+                source,
+                sink,
+                std::bind(&FlowGraph<Flow,Weight>::dijkstra, this, _1, _2, _3)
+            );
+        }
+        Flow edmond_karp(size_t source, size_t sink) {
+            using namespace std::placeholders;
+            return ford_fulkerson(
+                source,
+                sink,
+                std::bind(&FlowGraph<Flow,Weight>::bfs, this, _1, _2, _3)
+            ).first;
         }
 
     };
 
 } // namespace popup
-
