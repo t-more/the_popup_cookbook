@@ -2,6 +2,7 @@
 #include <vector>
 #include <queue>
 #include <deque>
+#include <stack>
 #include <optional>
 #include <limits>
 #include <algorithm>
@@ -113,6 +114,28 @@ namespace popup {
             }
             return total;
         }
+
+
+        void dfs(size_t start, std::function<void(size_t)> f) const {
+            std::stack<size_t> stack;
+            stack.push(start);
+            std::vector<bool> visited(num_nodes_, false);
+            while (!stack.empty()) {
+                auto node = stack.top();
+                stack.pop();
+                f(node);
+                visited[node] = true;
+
+                for (auto& edge : list_[node]) {
+                    if (!visited[edge->to()] && edge->residual() > 0) {
+                        visited[edge->to()] = true;
+                        stack.push(edge->to());
+                    }
+
+                }
+            }
+        };
+
 
         // BFS to find the shortest path (in number of edges) from source to
         // sink. If this isn't possible it will return false, otherwie true.
@@ -380,6 +403,18 @@ namespace popup {
             ).first;
         }
 
+        std::pair<std::vector<size_t>, Flow> st_cut(
+            size_t source,
+            size_t sink
+        ) {
+            Flow max_flow = edmond_karp(source, sink);
+            std::vector<size_t> result;
+
+            dfs(source, [&](size_t node) {
+                            result.push_back(node);
+                        });
+            return std::make_pair(result, max_flow);
+       }
     };
 
 } // namespace popup
