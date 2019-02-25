@@ -343,7 +343,8 @@ namespace popup {
                     //std::cerr << ce->to() << " ";
                     ce = came_from[ce->from()];
                 }
-                //std::cerr << "\n";
+                //std::cerr << " res: " << min_residual[to] << " d: " << 
+                //    distances[to] << std::endl;
             }
             //std::cerr << "RUN\n" ;
             if (!visited[to])  {
