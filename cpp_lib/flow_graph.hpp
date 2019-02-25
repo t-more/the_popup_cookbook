@@ -27,7 +27,7 @@ namespace popup {
         }
 
         Edge<Flow, Weight>* make_opposite() {
-            Edge<Flow, Weight>* e = new Edge<Flow, Weight>(to_, from_, 0, weight_);
+            Edge<Flow, Weight>* e = new Edge<Flow, Weight>(to_, from_, 0, -weight_);
             e->set_opposite(this);
             set_opposite(e);
             return e;
@@ -226,7 +226,8 @@ namespace popup {
                     //std::cerr << ce->to() << " ";
                     ce = came_from[ce->from()];
                 }
-                //std::cerr << "\n";
+                //std::cerr << " res: " << min_residual[to] << " d: " << 
+                //    distances[to] << std::endl;
             }
             //std::cerr << "RUN\n" ;
             if (!visited[to])  {
