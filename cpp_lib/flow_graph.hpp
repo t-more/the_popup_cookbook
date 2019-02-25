@@ -176,9 +176,11 @@ namespace popup {
             std::vector<Flow> min_residual(num_nodes_, std::numeric_limits<Flow>::max());
 
             distances[from] = 0;
-            Edge<Flow, Weight> dummy_edge = Edge<Flow, Weight>(-1,from,std::numeric_limits<Flow>::max(), 0);
+            Edge<Flow, Weight> dummy_edge = 
+                Edge<Flow, Weight>(0, from, std::numeric_limits<Flow>::max(), 0);
             queue.emplace(std::make_pair(&dummy_edge,0));
             came_from[from] = &dummy_edge;
+            //min_residual[-1] = std::numeric_limits<int>::max();
 
             while (!queue.empty()) {
                 auto e = queue.top();
@@ -189,7 +191,8 @@ namespace popup {
                     continue;
                 }
 
-                //                std::cerr << min_residual[came_from[current_node]->from()] << " " << current_edge->residual() << std::endl;
+                //std::cerr << "min_res " << min_residual[current_edge->from()] 
+                //    << " " << current_edge->residual() << std::endl;
                 min_residual[current_node] = std::min(
                     min_residual[current_edge->from()],
                     current_edge->residual()
@@ -208,7 +211,7 @@ namespace popup {
                         const auto weight = edge->weight();
                         auto node_dist = distances[node];
                         auto alt_dist = weight + cost;
-                        //                        std::cerr << alt_dist << std::endl;
+                        //std::cerr << alt_dist << std::endl;
                         if (node_dist > alt_dist) {
                             distances[node] = alt_dist;
                             came_from[node] = edge;
@@ -219,11 +222,11 @@ namespace popup {
             }
             {
                 auto ce = came_from[to];
-                while (ce != &dummy_edge) {
-                    std::cerr << ce->to() << " ";
+                while (ce != nullptr && ce != &dummy_edge) {
+                    //std::cerr << ce->to() << " ";
                     ce = came_from[ce->from()];
                 }
-                std::cerr << "\n";
+                //std::cerr << "\n";
             }
             //std::cerr << "RUN\n" ;
             if (!visited[to])  {
@@ -239,7 +242,10 @@ namespace popup {
         std::pair<Flow, Weight> ford_fulkerson(
             size_t source,
             size_t sink,
-            std::function<std::pair<Flow,Weight>(size_t, size_t, std::vector<Edge<Flow, Weight>*>&)> path_algo
+            std::function<std::pair<Flow,Weight>(
+                size_t, 
+                size_t, 
+                std::vector<Edge<Flow, Weight>*>&)> path_algo
         ) {
             std::vector<Edge<Flow, Weight>*> came_from(num_nodes_, nullptr);
             Flow flow = 0;
@@ -251,7 +257,7 @@ namespace popup {
                 size_t current_node = sink;
                 flow += res.first;
                 cost += res.first * res.second;
-                std::cerr << "rf: " << res.first <<  " rs: "<<res.second <<  std::endl;
+                //std::cerr << "rf: " << res.first <<  " rs: "<<res.second <<  std::endl;
 
                 while (current_node != source) {
                     const auto edge = came_from[current_node];
