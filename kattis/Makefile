@@ -5,7 +5,7 @@
 CC = g++
 FLAGS = -std=c++17 -fsanitize=undefined \
 		-Wall -Wconversion -Wfatal-errors \
-		-g -O2
+		-g
 
 TARGET = main
 TESTS = $(wildcard test/*.in)
@@ -27,5 +27,5 @@ test: $(TARGET).out
 	diff -w $${t%.*}.ans $${t%.*}.res || exit 0 ; done
 
 clean:
-	rm $(TARGET).out
-	rm test/*.res
+	rm -f $(TARGET).out
+	rm -f test/*.res
