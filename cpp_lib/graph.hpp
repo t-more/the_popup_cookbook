@@ -189,8 +189,30 @@ namespace popup {
 
 
         // This part specifies generic algorithms on graphs
-        // Bfs function will terminate when f returns false
-        void bfs(size_t start, std::function<bool(size_t)> f);
+
+        // BFS that runs f on every node it visits. f is given two arguments,
+        // first is the node when found and second is the distance to the given
+        // node from the start.
+        void bfs(size_t start, std::function<void(size_t node, size_t distance)> f) const {
+            std::queue<std::pair<size_t, size_t>> queue;
+            std::vector<bool> visited(num_nodes(), false);
+            queue.push(std::make_pair(start, 0));
+
+            while (!queue.empty()) {
+                auto p = queue.front();
+                queue.pop();
+                auto current_node = p.first;
+                f(current_node, p.second);
+                visited[current_node] = true;
+
+                for (auto& edge : list_[current_node]) {
+                    if (!visited[edge.to()]) {
+                        queue.push(std::make_pair(edge.to(), p.second+1));
+                        visited[edge.to()] = true;
+                    }
+                }
+            }
+        }
 
         void dfs(size_t start, std::function<void(size_t)> f) const {
             std::stack<size_t> stack;
