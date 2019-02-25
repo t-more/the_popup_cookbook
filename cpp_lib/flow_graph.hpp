@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <deque>
 #include <optional>
 #include <limits>
 #include <algorithm>
@@ -27,7 +28,7 @@ namespace popup {
         }
 
         Edge<Flow, Weight>* make_opposite() {
-            Edge<Flow, Weight>* e = new Edge<Flow, Weight>(to_, from_, 0, weight_);
+            Edge<Flow, Weight>* e = new Edge<Flow, Weight>(to_, from_, 0, -weight_);
             e->set_opposite(this);
             set_opposite(e);
             return e;
@@ -156,6 +157,100 @@ namespace popup {
             }
             return std::make_pair(0, 0);
         }
+        std::pair<Flow, Weight> desopo_pape(
+            size_t from,
+            size_t to,
+            std::vector<Edge<Flow, Weight>*> &came_from
+
+        ) {
+            std::vector<Weight> distances(
+                num_nodes_,
+                std::numeric_limits<Weight>::max()
+            );
+            std::vector<Flow> min_residual(
+                num_nodes_,
+                std::numeric_limits<Flow>::max()
+            );
+            distances[from] = 0;
+            std::vector<int> status(num_nodes_, 2);
+            std::deque<size_t> que;
+            que.push_back(from);
+            std::fill(came_from.begin(), came_from.end(), nullptr);
+
+            while (!que.empty()) {
+                size_t u = que.front();
+                que.pop_front();
+                status[u] = 0;
+
+                for (auto& edge : list_[u]) {
+                    if (edge->residual() > 0 && distances[edge->to()] > distances[u] + edge->weight()) {
+
+                        distances[edge->to()] =  distances[u] + edge->weight();
+                        came_from[edge->to()] = edge;
+                         min_residual[edge->to()] = std::min(
+                                min_residual[edge->from()],
+                                edge->residual()
+                            );
+                        if (status[edge->to()] == 2) {
+                            status[edge->to()] = 1;
+                            que.push_back(edge->to());
+                        } else if (status[edge->to()] == 0) {
+                            status[edge->to()] = 1;
+                            que.push_front(edge->to());
+                        }
+                    }
+                }
+            }
+            if (min_residual[to] == std::numeric_limits<Flow>::max())  {
+                return std::make_pair(0, 0);
+            } else {
+                return std::make_pair(min_residual[to], distances[to]);
+            }
+        }
+        std::pair<Flow, Weight> bellman_ford(
+            size_t from,
+            size_t to,
+            std::vector<Edge<Flow, Weight>*> &came_from
+        ) {
+            std::vector<Weight> distances(
+                num_nodes_,
+                std::numeric_limits<Weight>::max()
+            );
+            std::vector<Flow> min_residual(
+                num_nodes_,
+                std::numeric_limits<Flow>::max()
+            );
+            distances[from] = 0;
+
+            Edge<Flow, Weight> dummy_edge =
+                Edge<Flow, Weight>(0, from, std::numeric_limits<Flow>::max(), 0);
+            came_from[from] = &dummy_edge;
+
+            for (size_t n = 0; n < num_nodes_ - 1; n++) {
+                for (size_t i = 0; i < num_nodes_; i++) {
+                    for (auto& edge : list_[i]) {
+                        if (distances[edge->from()] == std::numeric_limits<Weight>::max()) {
+                            continue;
+                        }
+                        auto trav_cost = distances[edge->from()] + edge->weight();
+                        if (trav_cost < distances[edge->to()] && edge->residual() > 0) {
+                            came_from[edge->to()] = edge;
+                            distances[edge->to()] = trav_cost;
+                            min_residual[edge->to()] = std::min(
+                                min_residual[edge->from()],
+                                edge->residual()
+                            );
+                        }
+                    }
+                }
+            }
+            //std::cerr << "RUN\n" ;
+            if (min_residual[to] == std::numeric_limits<Flow>::max())  {
+                return std::make_pair(0, 0);
+            } else {
+                return std::make_pair(min_residual[to], distances[to]);
+            }
+        }
 
         std::pair<Flow, Weight> dijkstra(
             size_t from,
@@ -176,8 +271,9 @@ namespace popup {
             std::vector<Flow> min_residual(num_nodes_, std::numeric_limits<Flow>::max());
 
             distances[from] = 0;
-            Edge<Flow, Weight> dummy_edge = 
+            Edge<Flow, Weight> dummy_edge =
                 Edge<Flow, Weight>(0, from, std::numeric_limits<Flow>::max(), 0);
+            //            dummy_edge.flow_ = std::numeric_limits<Flow>::max();
             queue.emplace(std::make_pair(&dummy_edge,0));
             came_from[from] = &dummy_edge;
             //min_residual[-1] = std::numeric_limits<int>::max();
@@ -191,22 +287,20 @@ namespace popup {
                     continue;
                 }
 
-                //std::cerr << "min_res " << min_residual[current_edge->from()] 
-                //    << " " << current_edge->residual() << std::endl;
                 min_residual[current_node] = std::min(
                     min_residual[current_edge->from()],
                     current_edge->residual()
                 );
-
                 visited[current_node] = true;
-                auto cost = distances[current_node];
+
+                auto cost = e.second; //distances[current_node];
 
                 if (current_node == to) {
                     break;
                 }
 
                 for (const auto edge : list_[current_node]) {
-                    if (edge->residual() > 0) {
+                    if (edge->residual() > 0 && !visited[edge->to()]) {
                         auto node = edge->to();
                         const auto weight = edge->weight();
                         auto node_dist = distances[node];
@@ -243,8 +337,8 @@ namespace popup {
             size_t source,
             size_t sink,
             std::function<std::pair<Flow,Weight>(
-                size_t, 
-                size_t, 
+                size_t,
+                size_t,
                 std::vector<Edge<Flow, Weight>*>&)> path_algo
         ) {
             std::vector<Edge<Flow, Weight>*> came_from(num_nodes_, nullptr);
@@ -274,7 +368,7 @@ namespace popup {
             return ford_fulkerson(
                 source,
                 sink,
-                std::bind(&FlowGraph<Flow,Weight>::dijkstra, this, _1, _2, _3)
+                std::bind(&FlowGraph<Flow,Weight>::desopo_pape, this, _1, _2, _3)
             );
         }
         Flow edmond_karp(size_t source, size_t sink) {
