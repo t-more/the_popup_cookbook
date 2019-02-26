@@ -507,6 +507,77 @@ namespace popup {
 
         return result;
       }
+
+      std::optional<std::vector<size_t>> eulerian_path() {
+        size_t odds_count = 0;
+        size_t odds[2] = {
+            std::numeric_limits<size_t>::max(), 
+            std::numeric_limits<size_t>::max()
+        };
+
+        std::vector<size_t> in_degree(capacity_);
+        std::vector<size_t> visited(capacity_);
+        
+        for (auto &edges : list_) {
+            for(auto &edge : edges) {
+                in_degree[edge.to()]++;
+            }
+        }
+
+        for(size_t i = 0; i < in_degree.size(); i++) {
+            size_t out_degree = list_[i].size();
+            if(in_degree[i] < out_degree) {
+                odds[0] = i;
+                odds_count++
+            } else if(in_degree[i] > out_degree) {
+                odds[1] = i;
+                odds_count++
+            }
+            
+            if (odds_count > 2 || std::abs(in_degree[i] - out_degree) < 2) {
+                return std::nullopt;
+            }
+        }
+
+        bool odds_set[2] = {
+            odds[0] != std::numeric_limits<size_t>::max(),
+            odds[1] != std::numeric_limits<size_t>::max()
+        };
+
+        if(odds_set[0] ^ odds_set[1]){
+            std::cerr << "Same odds\n";
+            return std::nullopt;
+        }
+
+        if(odds_set[0] && odds_set[1]) {
+            add_edge(odds[1], odds[0], 0);
+        }
+
+        std::stack<size_t> stack;
+        std::unordered_set<(void*)> removed_edge;
+        stack.push(0);
+        while(!stack.empty()) {
+            size_t current_node = stack.top();
+            stack.pop();
+
+            for(auto &edge : list_[current_node]) {
+                if(removed_edge.find((void*)&edge) == removed_edge.end()) {
+                    if(edge.to() == v)
+                    stack.push(edge.to());
+
+                }
+            }
+        }
+
+        for(bool v : visited) {
+            if(!v) {
+                std::cerr << "Did not visit every node " << v << std::endl;
+                return std::nullopt;
+            }
+        }
+
+        return result;
+      }
     };
 
 } // namespace popup
