@@ -437,6 +437,76 @@ namespace popup {
           return std::nullopt;
       }
 
-  };
+      std::optional<std::vector<size_t>> eulerian_path_undirected() {
+        size_t odd_index = 0;
+        size_t odds[2] = {
+            std::numeric_limits<size_t>::max(), 
+            std::numeric_limits<size_t>::max()
+        };
+
+        for (auto &edges : list_) {
+            size_t degree = list_.size();
+            if (degree % 2 == 1) {
+                odds[odd_index++] = edges[0].from(); 
+            }
+            if (odd_index > 2) {
+                std::cerr << "Too many odds\n";
+                return std::nullopt;
+            }
+        }
+
+        bool odds_set[2] = {
+            odds[0] != std::numeric_limits<size_t>::max(),
+            odds[1] != std::numeric_limits<size_t>::max()
+        };
+
+        if(odds_set[0] ^ odds_set[1]){
+            std::cerr << "Same odds\n";
+            return std::nullopt;
+        }
+
+        if(odds_set[0] && odds_set[1]) {
+            this->add_bi_edge(odds[0], odds[1], 0);
+        }
+
+        // Russian algorithm
+        std::stack<size_t> stack;
+        std::vector<size_t> result;
+        std::unordered_set<void*> removed_edge;
+        std::vector<bool> visited(capacity_);
+        stack.push(0);
+        while (!stack.empty()) {
+            size_t v = stack.top();
+            visited[v] = true;
+            size_t degree = 0;
+            for (auto &edge : list_[v]) {
+                if(removed_edge.find((void*)&edge) == removed_edge.end()) {
+                    degree++;
+                }
+            }
+            std::cerr << v << " degree: " << degree << std::endl;
+            if (degree == 0) {
+                result.push_back(v);
+                stack.pop();
+            } else {
+                for (auto &edge : list_[v]) {
+                    if(removed_edge.find((void*)&edge) == removed_edge.end()) {
+                        stack.push(edge.to());
+                        removed_edge.insert((void*)(&edge));
+                    }
+                }
+            }
+        }
+        
+        for(bool v : visited) {
+            if(!v) {
+                std::cerr << "Did not visit every node " << v << std::endl;
+                return std::nullopt;
+            }
+        }
+
+        return result;
+      }
+    };
 
 } // namespace popup
