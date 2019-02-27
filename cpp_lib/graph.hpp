@@ -176,6 +176,9 @@ namespace popup {
         size_t num_nodes() const {
             return capacity_;
         }
+        size_t num_edges() const {
+            return num_edges_;
+        }
 
         void set_weight(size_t from, size_t to, T weight) {
             graph_modified_ = true;
@@ -408,7 +411,7 @@ namespace popup {
         }
 
         std::optional<std::pair<T,std::vector<Edge<T>>>> kruskal() {
-            std::vector<Edge<T>> all_edges(num_edges_);
+            std::vector<Edge<T>> all_edges(num_edges());
             int total_edge_count = 0;
             for (auto& edges : list_) {
                 for (auto& edge : edges) {
@@ -509,15 +512,15 @@ namespace popup {
         }
 
 
-        void eulerian_path_help(std::vector<size_t>& path, std::unordered_set<void*>& used_edges, size_t node) const {
-            for (auto& edge : list_[node]) {
-                if (used_edges.find((void*)&edge) == used_edges.end()) {
-                    used_edges.insert((void*)&edge);
-                    eulerian_path_help(path, used_edges, edge.to());
-                }
-            }
-            path.push_back(node);
-        }
+        // void eulerian_path_help(std::vector<size_t>& path, std::unordered_set<void*>& used_edges, size_t node) const {
+        //     for (auto& edge : list_[node]) {
+        //         if (used_edges.find((void*)&edge) == used_edges.end()) {
+        //             used_edges.insert((void*)&edge);
+        //             eulerian_path_help(path, used_edges, edge.to());
+        //         }
+        //     }
+        //     path.push_back(node);
+        // }
 
         std::optional<std::vector<size_t>> eulerian_path() {
             size_t odds_count = 0;
@@ -561,24 +564,45 @@ namespace popup {
             }
 
             bool missing_edge = odds_set[0] && odds_set[1];
-            if(odds_set[0] && odds_set[1]) {
-                add_edge(odds[1], odds[0], 0);
-            }
 
+            // if(odds_set[0] && odds_set[1]) {
+            //     add_edge(odds[1], odds[0], 0);
+            // }
 
             std::vector<size_t> path;
             path.reserve(num_nodes());
             std::unordered_set<void*> removed_edges;
-            eulerian_path_help(path, removed_edges, missing_edge ? odds_set[1] : 0);
-            if (missing_edge) {
-                path.erase(path.begin());
-            }
-            std::reverse(path.begin(), path.end());
+            std::stack<size_t> stack;
 
-            if (removed_edges.size() != num_edges_) {
+            // Idea shamelessy stolen from kactl
+            std::vector< decltype(list_[0].begin()) > edges_left;
+            edges_left.reserve(num_nodes());
+            for (auto &edges : list_) {
+                edges_left.push_back(edges.begin());
+            }
+            stack.push(missing_edge ? odds[0] : 0);
+
+            while (!stack.empty()) {
+                auto elem = stack.top();
+                auto& edge_itr = edges_left[elem];
+                auto edge_itr_end = list_[elem].end();
+                while (edge_itr != edge_itr_end
+                       && removed_edges.find((void*)&(*edge_itr)) != removed_edges.end()) {
+                    edge_itr++;
+                }
+                if (edge_itr == edge_itr_end) {
+                    path.push_back(elem);
+                    stack.pop();
+                } else {
+                    stack.push(edge_itr->to());
+                    removed_edges.insert((void*)&(*edge_itr));
+                }
+            }
+
+            if (path.size() != num_edges() + 1) {
                 return std::nullopt;
             }
-
+            std::reverse(path.begin(), path.end());
             return path;
         }
     };
