@@ -1,3 +1,5 @@
+// Author: Tomas Möre, Marcus Östling 2019
+
 #include <iostream>
 #include <functional>
 #include <optional>
@@ -15,6 +17,10 @@
 
 namespace popup {
 
+    /**
+     * Edge class used internaly for for the bellow graph class. Contains
+     * information about where and to the edges go as well as a weight.
+     */
     template <class T>
     class Edge {
         size_t from_ = 0;
@@ -45,14 +51,26 @@ namespace popup {
         }
     };
 
+    /**
+     *  The bellan ford result class stores information about a run of bellman
+     *  ford. This ensures that computations aren't run that isn't required.
+     */
     template<typename T>
     class BellmanFordResult {
+        // Flag for checking if the result contains any cylces whatsoever.
         bool contains_cycles_;
+        // The starting node associated with this result
         size_t start_node_;
+        // Vector of ditances to nodes from the starting node
         std::vector<T> distances_;
+        // Vector of nodes that were predecessors to the current node in found
+        // path. OBS: there may be infinite cycles.
         std::vector<size_t> came_from_;
+        // Vector to keep track of what nodes are reachable from a infinite
+        // cycle that is reachable.
         std::vector<bool> inf_reachable_;
     public:
+
         BellmanFordResult(
             size_t start_node,
             bool contains_cycles,
@@ -67,24 +85,29 @@ namespace popup {
             inf_reachable_ = inf_reachable;
         }
 
-        // Returns ture if the graph contains cycles in general.
+        // Returns ture if the result some cycle.
         bool contains_cycles() const {
             return contains_cycles_;
         }
+        // Returns true if there exists a negative cycle that is reachable from
+        // both the starting node and the end node.
         bool contains_cycles(size_t to) const {
             return inf_reachable_[to];
         }
+
+        // Returns the starting node associated with the result.
         size_t start_node() const {
             return start_node_;
         }
 
-        // Returns true if it is possible to reache a node from the source node
+        // Returns true if it is possible to reach a node from the source node
         bool reachable(size_t node) const {
             return node < distances_.size() && distances_[node] != std::numeric_limits<T>::max();
         }
 
         // Returns the distance to a specific node if it is reachable and the
-        // there is no negative cycle on the path.
+        // there is no negative cycle on the path between the stat node and the
+        // target. Otherwise the result is empty.
         std::optional<T> distance_to(size_t node) const {
             if (!reachable(node) || inf_reachable_[node]) {
                 return std::nullopt;
@@ -94,7 +117,7 @@ namespace popup {
         }
 
         // Reconstructs the path if there is a valid path without negative
-        // cycles, otherwise the optional is empty.
+        // cycles, otherwise the result is empty.
         std::optional<std::vector<size_t>> reconstruct_path(size_t node) const {
             if (!reachable(node) || distance_to(distance_to).has_value()) {
                 size_t current_node = node;
@@ -109,50 +132,46 @@ namespace popup {
         }
     };
 
+    /**
+     *  A class representing weighted graphs.
+     */
     template <class T>
     class Graph {
     protected:
+        // Number of nodes in the graph.
         size_t size_ = 0;
-        size_t capacity_;
+        // Number of inserted edges in the graph
         size_t num_edges_ = 0;
-
+        // Vector of edges originating from each node.
         std::vector<std::vector<Edge<T>>> list_;
-        bool graph_modified_ = false;
-        //
-        std::unordered_map<size_t, std::shared_ptr<BellmanFordResult<T>>> cache_;
 
+        // Flag for keeping track of modifications in the graph for possobile
+        // caching of results
+        bool graph_modified_ = false;
+
+        // Map keeping track of previous results of bellman ford runs.
+        std::unordered_map<size_t, std::shared_ptr<BellmanFordResult<T>>> bellman_ford_cache_;
+
+        /**
+         * Internal method to get edges originating for a particular node
+         */
         std::vector<Edge<T>>& edges_from(size_t node) {
             return list_[node];
         }
 
     public:
-        Graph(size_t capacity) {
-            capacity_ = capacity;
+
+        Graph(size_t size) {
+            size_ = size;
             list_ = std::vector<std::vector<Edge<T>>>(
-                Graph<T>::capacity_,
+                Graph<T>::size_,
                 std::vector<Edge<T>>()
             );
         }
 
-        std::optional<T> get_weight(size_t from, size_t to) {
-            size_t a = to;
-            auto iter = std::find_if(list_[from].begin(), list_[from].end(),
-                                     [&](const Edge<T> e){
-                                         return e.to() == a;
-                                     });
-            if (iter == std::end(list_[from])) {
-                return std::nullopt;
-            } else {
-                return std::make_optional(iter->weight());
-            }
-        };
-
-        void traverse_neighbors(size_t from, std::function<void(size_t, const T&)> f) {
-            for(auto e : list_[from]) {
-                f(e.to(), e.weight());
-            }
-        };
-
+        /**
+         *  Method that traverses all edges originating from a particulat node.
+         */
         void traverse_edges(std::function<void(Edge<T>&)> f) {
             for(auto &outer : list_) {
                 for(auto &inner : outer) {
@@ -161,11 +180,17 @@ namespace popup {
             }
         };
 
-        void add_bi_edge(size_t from, size_t to, T weight) {
-            add_edge(from, to, weight);
-            add_edge(to, from, weight);
+        /**
+         * Adds two edges to the graph
+         */
+        void add_bi_edge(size_t a, size_t b, T weight) {
+            add_edge(a, b, weight);
+            add_edge(b, a, weight);
         };
 
+        /**
+         *
+         */
         bool add_edge(size_t from, size_t to, T weight) {
             graph_modified_ = true;
             list_[from].emplace_back(Edge<T>(from, to, weight));
@@ -174,22 +199,11 @@ namespace popup {
         };
 
         size_t num_nodes() const {
-            return capacity_;
+            return size_;
         }
         size_t num_edges() const {
             return num_edges_;
         }
-
-        void set_weight(size_t from, size_t to, T weight) {
-            graph_modified_ = true;
-            auto opt_weight = get_weight(from, to);
-            if (opt_weight) {
-                opt_weight = weight;
-            } else {
-                assert(false); // opt_weight should always have a value.
-            }
-        };
-
 
         // This part specifies generic algorithms on graphs
 
@@ -301,13 +315,13 @@ namespace popup {
         std::shared_ptr<BellmanFordResult<T>>
         bellman_ford(size_t from) {
             // Asking for a element outside the graph
-            auto cached = cache_.find(from);
-            bool cache_exists = cached != cache_.end();
+            auto cached = bellman_ford_cache_.find(from);
+            bool cache_exists = cached != bellman_ford_cache_.end();
             if (!graph_modified_ && cache_exists) {
                 return cached->second;
             }
             if (graph_modified_) {
-                cache_.clear();
+                bellman_ford_cache_.clear();
                 graph_modified_ = false;
             }
 
@@ -368,7 +382,7 @@ namespace popup {
                     came_from,
                     inf_reachable
                 );
-            cache_.insert(
+            bellman_ford_cache_.insert(
                 std::make_pair(
                     from,
                     result
@@ -476,7 +490,7 @@ namespace popup {
             std::stack<size_t> stack;
             std::vector<size_t> result;
             std::unordered_set<void*> removed_edge;
-            std::vector<bool> visited(capacity_);
+            std::vector<bool> visited(num_nodes());
             stack.push(0);
             while (!stack.empty()) {
                 size_t v = stack.top();
@@ -529,8 +543,8 @@ namespace popup {
                               std::numeric_limits<size_t>::max()
             };
 
-            std::vector<size_t> in_degree(capacity_);
-            std::vector<size_t> visited(capacity_);
+            std::vector<size_t> in_degree(num_nodes());
+            std::vector<size_t> visited(num_nodes());
 
             for (auto &edges : list_) {
                 for(auto &edge : edges) {
