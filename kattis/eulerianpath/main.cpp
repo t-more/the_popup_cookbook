@@ -15,9 +15,9 @@ int main() {
         while(m--) {
             int from, to;
             cin >> from >> to;
-            graph.add_bi_edge(from, to, 0);
+            graph.add_edge(from, to, 0);
         }
-        auto res = graph.eulerian_path_undirected();
+        auto res = graph.eulerian_path();
         if(res) {
             for(size_t i : res.value()) {
                 cout << i << " ";
@@ -28,7 +28,7 @@ int main() {
         }
         cin >> n >> m;
     }
-    
+
 
 
     return 0;

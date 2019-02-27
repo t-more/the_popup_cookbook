@@ -9,13 +9,13 @@
 #include <algorithm>
 #include <variant>
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 #include "union_find.hpp"
 
 namespace popup {
 
     template <class T>
-
     class Edge {
         size_t from_ = 0;
         size_t to_ = 0;
@@ -329,255 +329,258 @@ namespace popup {
                             continue;
                         }
                         T trav_cost = distances[edge.from()] + edge.weight();
-                      if (trav_cost < distances[edge.to()]) {
-                          came_from[edge.to()] = edge.from();
-                          distances[edge.to()] = trav_cost;
-                      }
-                  }
-              }
-          }
-
-          bool found_negative_cycle = false;
-          std::vector<bool> inf_reachable(num_nodes(), false);
-
-          // Identify negative cycles, for each negative cycle found a dfs is
-          // ran to find nodes that can be reached from it.
-          for (int node = 0; node < (int)num_nodes(); node++) {
-              for (const auto& edge : list_[node])  {
-                  if (distances[edge.from()] == std::numeric_limits<T>::max()) {
-                      continue;
-                  }
-                  T trav_cost = distances[edge.from()] + edge.weight();
-                  if (trav_cost < distances[edge.to()] && !inf_reachable[edge.to()]) {
-                      found_negative_cycle = true;
-                      dfs(edge.to(), [&](size_t node){
-                                         inf_reachable[node] = true;
-                                     });
-                  }
-              }
-          }
-
-          std::shared_ptr<BellmanFordResult<T>> result =
-              std::make_shared<BellmanFordResult<T>>(
-                  from,
-                  found_negative_cycle,
-                  distances,
-                  came_from,
-                  inf_reachable
-              );
-          cache_.insert(
-              std::make_pair(
-                  from,
-                  result
-              ));
-          return result;
-      }
-
-
-      std::vector<std::vector<T>> all_pairs_shortest_paths() {
-
-          std::vector<std::vector<T>> result(num_nodes(), std::vector<T>(num_nodes(), std::numeric_limits<T>::max()));
-
-          // Assing initial edge costs
-          for (auto& inner : list_) {
-              for (auto& edge : inner) {
-                  result[edge.from()][edge.to()] = std::min(result[edge.from()][edge.to()], edge.weight());
-              }
-          }
-
-          // Any non assigned self loops are kept
-          for (int d = 0; d < num_nodes(); d++) {
-              if (result[d][d] > 0) {
-                  result[d][d] = 0;
-              }
-          }
-
-          // Main meat of the floyd warshall
-          for (int k = 0; k < num_nodes(); k++) {
-              for (int i = 0; i < num_nodes(); i++) {
-                  for (int j = 0; j < num_nodes(); j++) {
-                      if (result[i][k] != std::numeric_limits<T>::max()
-                          && result[k][j] != std::numeric_limits<T>::max())
-                      {
-                          result[i][j]  = std::min(result[i][j], result[i][k] + result[k][j]);
-                      }
-                  }
-              }
-          }
-          return result;
-      }
-
-      std::optional<std::pair<T,std::vector<Edge<T>>>> kruskal() {
-          std::vector<Edge<T>> all_edges(num_edges_);
-          int total_edge_count = 0;
-          for (auto& edges : list_) {
-              for (auto& edge : edges) {
-                  all_edges[total_edge_count++] = edge;
-              }
-          }
-          std::sort(all_edges.begin(), all_edges.end());
-          popup::UnionFind uf(num_nodes());
-
-          std::vector<Edge<T>> result(num_nodes() - 1);
-
-          // Dis issss kruskaaaal
-          int mst_edge_count = 0;
-          T cost = 0;
-          for (auto& edge : all_edges) {
-              if (uf.find(edge.from()) != uf.find(edge.to())) {
-
-                  cost += edge.weight();
-                  uf.make_union(edge.from(), edge.to());
-                  result[mst_edge_count++] = edge;
-                  if (mst_edge_count >= num_nodes() -1) {
-                      return std::make_pair(cost, result);
-                  }
-              }
-          }
-          return std::nullopt;
-      }
-
-      std::optional<std::vector<size_t>> eulerian_path_undirected() {
-        size_t odd_index = 0;
-        size_t odds[2] = {
-            std::numeric_limits<size_t>::max(), 
-            std::numeric_limits<size_t>::max()
-        };
-
-        for (auto &edges : list_) {
-            size_t degree = list_.size();
-            if (degree % 2 == 1) {
-                odds[odd_index++] = edges[0].from(); 
-            }
-            if (odd_index > 2) {
-                std::cerr << "Too many odds\n";
-                return std::nullopt;
-            }
-        }
-
-        bool odds_set[2] = {
-            odds[0] != std::numeric_limits<size_t>::max(),
-            odds[1] != std::numeric_limits<size_t>::max()
-        };
-
-        if(odds_set[0] ^ odds_set[1]){
-            std::cerr << "Same odds\n";
-            return std::nullopt;
-        }
-
-        if(odds_set[0] && odds_set[1]) {
-            this->add_bi_edge(odds[0], odds[1], 0);
-        }
-
-        // Russian algorithm
-        std::stack<size_t> stack;
-        std::vector<size_t> result;
-        std::unordered_set<void*> removed_edge;
-        std::vector<bool> visited(capacity_);
-        stack.push(0);
-        while (!stack.empty()) {
-            size_t v = stack.top();
-            visited[v] = true;
-            size_t degree = 0;
-            for (auto &edge : list_[v]) {
-                if(removed_edge.find((void*)&edge) == removed_edge.end()) {
-                    degree++;
-                }
-            }
-            std::cerr << v << " degree: " << degree << std::endl;
-            if (degree == 0) {
-                result.push_back(v);
-                stack.pop();
-            } else {
-                for (auto &edge : list_[v]) {
-                    if(removed_edge.find((void*)&edge) == removed_edge.end()) {
-                        stack.push(edge.to());
-                        removed_edge.insert((void*)(&edge));
+                        if (trav_cost < distances[edge.to()]) {
+                            came_from[edge.to()] = edge.from();
+                            distances[edge.to()] = trav_cost;
+                        }
                     }
                 }
             }
-        }
-        
-        for(bool v : visited) {
-            if(!v) {
-                std::cerr << "Did not visit every node " << v << std::endl;
-                return std::nullopt;
-            }
-        }
 
-        return result;
-      }
+            bool found_negative_cycle = false;
+            std::vector<bool> inf_reachable(num_nodes(), false);
 
-      std::optional<std::vector<size_t>> eulerian_path() {
-        size_t odds_count = 0;
-        size_t odds[2] = {
-            std::numeric_limits<size_t>::max(), 
-            std::numeric_limits<size_t>::max()
-        };
+            // Identify negative cycles, for each negative cycle found a dfs is
+            // ran to find nodes that can be reached from it.
+            for (int node = 0; node < (int)num_nodes(); node++) {
+                for (const auto& edge : list_[node])  {
+                    if (distances[edge.from()] == std::numeric_limits<T>::max()) {
+                        continue;
+                    }
+                    T trav_cost = distances[edge.from()] + edge.weight();
+                    if (trav_cost < distances[edge.to()] && !inf_reachable[edge.to()]) {
+                        found_negative_cycle = true;
+                        dfs(edge.to(), [&](size_t node){
+                                           inf_reachable[node] = true;
+                                       });
+                    }
+                }
+            }
 
-        std::vector<size_t> in_degree(capacity_);
-        std::vector<size_t> visited(capacity_);
-        
-        for (auto &edges : list_) {
-            for(auto &edge : edges) {
-                in_degree[edge.to()]++;
-            }
-        }
-
-        for(size_t i = 0; i < in_degree.size(); i++) {
-            size_t out_degree = list_[i].size();
-            if(in_degree[i] < out_degree) {
-                odds[0] = i;
-                odds_count++
-            } else if(in_degree[i] > out_degree) {
-                odds[1] = i;
-                odds_count++
-            }
-            
-            if (odds_count > 2 || std::abs(in_degree[i] - out_degree) < 2) {
-                return std::nullopt;
-            }
+            std::shared_ptr<BellmanFordResult<T>> result =
+                std::make_shared<BellmanFordResult<T>>(
+                    from,
+                    found_negative_cycle,
+                    distances,
+                    came_from,
+                    inf_reachable
+                );
+            cache_.insert(
+                std::make_pair(
+                    from,
+                    result
+                ));
+            return result;
         }
 
-        bool odds_set[2] = {
-            odds[0] != std::numeric_limits<size_t>::max(),
-            odds[1] != std::numeric_limits<size_t>::max()
-        };
 
-        if(odds_set[0] ^ odds_set[1]){
-            std::cerr << "Same odds\n";
+        std::vector<std::vector<T>> all_pairs_shortest_paths() {
+
+            std::vector<std::vector<T>> result(num_nodes(), std::vector<T>(num_nodes(), std::numeric_limits<T>::max()));
+
+            // Assing initial edge costs
+            for (auto& inner : list_) {
+                for (auto& edge : inner) {
+                    result[edge.from()][edge.to()] = std::min(result[edge.from()][edge.to()], edge.weight());
+                }
+            }
+
+            // Any non assigned self loops are kept
+            for (int d = 0; d < num_nodes(); d++) {
+                if (result[d][d] > 0) {
+                    result[d][d] = 0;
+                }
+            }
+
+            // Main meat of the floyd warshall
+            for (int k = 0; k < num_nodes(); k++) {
+                for (int i = 0; i < num_nodes(); i++) {
+                    for (int j = 0; j < num_nodes(); j++) {
+                        if (result[i][k] != std::numeric_limits<T>::max()
+                            && result[k][j] != std::numeric_limits<T>::max())
+                        {
+                            result[i][j]  = std::min(result[i][j], result[i][k] + result[k][j]);
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+
+        std::optional<std::pair<T,std::vector<Edge<T>>>> kruskal() {
+            std::vector<Edge<T>> all_edges(num_edges_);
+            int total_edge_count = 0;
+            for (auto& edges : list_) {
+                for (auto& edge : edges) {
+                    all_edges[total_edge_count++] = edge;
+                }
+            }
+            std::sort(all_edges.begin(), all_edges.end());
+            popup::UnionFind uf(num_nodes());
+
+            std::vector<Edge<T>> result(num_nodes() - 1);
+
+            // Dis issss kruskaaaal
+            int mst_edge_count = 0;
+            T cost = 0;
+            for (auto& edge : all_edges) {
+                if (uf.find(edge.from()) != uf.find(edge.to())) {
+
+                    cost += edge.weight();
+                    uf.make_union(edge.from(), edge.to());
+                    result[mst_edge_count++] = edge;
+                    if (mst_edge_count >= num_nodes() -1) {
+                        return std::make_pair(cost, result);
+                    }
+                }
+            }
             return std::nullopt;
         }
 
-        if(odds_set[0] && odds_set[1]) {
-            add_edge(odds[1], odds[0], 0);
-        }
+        std::optional<std::vector<size_t>> eulerian_path_undirected() {
+            size_t odd_index = 0;
+            size_t odds[2] = {
+                              std::numeric_limits<size_t>::max(),
+                              std::numeric_limits<size_t>::max()
+            };
 
-        std::stack<size_t> stack;
-        std::unordered_set<(void*)> removed_edge;
-        stack.push(0);
-        while(!stack.empty()) {
-            size_t current_node = stack.top();
-            stack.pop();
-
-            for(auto &edge : list_[current_node]) {
-                if(removed_edge.find((void*)&edge) == removed_edge.end()) {
-                    if(edge.to() == v)
-                    stack.push(edge.to());
-
+            for (auto &edges : list_) {
+                size_t degree = list_.size();
+                if (degree % 2 == 1) {
+                    odds[odd_index++] = edges[0].from();
+                }
+                if (odd_index > 2) {
+                    //                    std::cerr << "Too many odds\n";
+                    return std::nullopt;
                 }
             }
-        }
 
-        for(bool v : visited) {
-            if(!v) {
-                std::cerr << "Did not visit every node " << v << std::endl;
+            bool odds_set[2] = {
+                                odds[0] != std::numeric_limits<size_t>::max(),
+                                odds[1] != std::numeric_limits<size_t>::max()
+            };
+
+            if(odds_set[0] ^ odds_set[1]){
+                //                std::cerr << "Same odds\n";
                 return std::nullopt;
             }
+
+            if(odds_set[0] && odds_set[1]) {
+                this->add_bi_edge(odds[0], odds[1], 0);
+            }
+
+            // Russian algorithm
+            std::stack<size_t> stack;
+            std::vector<size_t> result;
+            std::unordered_set<void*> removed_edge;
+            std::vector<bool> visited(capacity_);
+            stack.push(0);
+            while (!stack.empty()) {
+                size_t v = stack.top();
+                visited[v] = true;
+                size_t degree = 0;
+                for (auto &edge : list_[v]) {
+                    if(removed_edge.find((void*)&edge) == removed_edge.end()) {
+                        degree++;
+                    }
+                }
+                //                std::cerr << v << " degree: " << degree << std::endl;
+                if (degree == 0) {
+                    result.push_back(v);
+                    stack.pop();
+                } else {
+                    for (auto &edge : list_[v]) {
+                        if(removed_edge.find((void*)&edge) == removed_edge.end()) {
+                            stack.push(edge.to());
+                            removed_edge.insert((void*)(&edge));
+                        }
+                    }
+                }
+            }
+
+            for(bool v : visited) {
+                if(!v) {
+                    //                    std::cerr << "Did not visit every node " << v << std::endl;
+                    return std::nullopt;
+                }
+            }
+
+            return result;
         }
 
-        return result;
-      }
+
+        void eulerian_path_help(std::vector<size_t>& path, std::unordered_set<void*>& used_edges, size_t node) const {
+            for (auto& edge : list_[node]) {
+                if (used_edges.find((void*)&edge) == used_edges.end()) {
+                    used_edges.insert((void*)&edge);
+                    eulerian_path_help(path, used_edges, edge.to());
+                }
+            }
+            path.push_back(node);
+        }
+
+        std::optional<std::vector<size_t>> eulerian_path() {
+            size_t odds_count = 0;
+            size_t odds[2] = {
+                              std::numeric_limits<size_t>::max(),
+                              std::numeric_limits<size_t>::max()
+            };
+
+            std::vector<size_t> in_degree(capacity_);
+            std::vector<size_t> visited(capacity_);
+
+            for (auto &edges : list_) {
+                for(auto &edge : edges) {
+                    in_degree[edge.to()]++;
+                }
+            }
+
+            for(size_t i = 0; i < in_degree.size(); i++) {
+                size_t out_degree = list_[i].size();
+                if(in_degree[i] < out_degree) {
+                    odds[0] = i;
+                    odds_count++;
+                } else if(in_degree[i] > out_degree) {
+                    odds[1] = i;
+                    odds_count++;
+                }
+
+                if (odds_count > 2 || in_degree[i] >= out_degree + 2 || in_degree[i] + 2 <= out_degree) {
+                    return std::nullopt;
+                }
+            }
+
+            bool odds_set[2] = {
+                                odds[0] != std::numeric_limits<size_t>::max(),
+                                odds[1] != std::numeric_limits<size_t>::max()
+            };
+
+            if(odds_set[0] ^ odds_set[1]){
+                //std::cerr << "Same odds\n";
+                return std::nullopt;
+            }
+
+            bool missing_edge = odds_set[0] && odds_set[1];
+            if(odds_set[0] && odds_set[1]) {
+                add_edge(odds[1], odds[0], 0);
+            }
+
+
+            std::vector<size_t> path;
+            path.reserve(num_nodes());
+            std::unordered_set<void*> removed_edges;
+            eulerian_path_help(path, removed_edges, missing_edge ? odds_set[1] : 0);
+            if (missing_edge) {
+                path.erase(path.begin());
+            }
+            std::reverse(path.begin(), path.end());
+
+            if (removed_edges.size() != num_edges_) {
+                return std::nullopt;
+            }
+
+            return path;
+        }
     };
 
 } // namespace popup
