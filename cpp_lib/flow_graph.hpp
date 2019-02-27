@@ -95,11 +95,14 @@ namespace popup {
         std::vector<std::vector<Edge<Flow, Weight>*>> list_;
         size_t num_nodes_ = 0;
 
-
     public:
         FlowGraph(size_t num_nodes) {
             num_nodes_ = num_nodes;
             list_.resize(num_nodes, std::vector<Edge<Flow, Weight>*>());
+        }
+
+        size_t num_nodes() const {
+            return num_nodes_;
         }
 
         /**
@@ -111,7 +114,7 @@ namespace popup {
             list_[to].emplace_back(edge->make_opposite());
         }
 
-        /** 
+        /**
          * Get the residual graph.
          * Only to be used after edmond-karp.
          */
@@ -124,7 +127,6 @@ namespace popup {
                     }
                 }
             }
-
             return used_edges;
         }
 
@@ -148,7 +150,8 @@ namespace popup {
         void dfs(size_t start, std::function<void(size_t)> f) const {
             std::stack<size_t> stack;
             stack.push(start);
-            std::vector<bool> visited(num_nodes_, false);
+            std::vector<bool> visited(num_nodes(), false);
+
             while (!stack.empty()) {
                 auto node = stack.top();
                 stack.pop();
@@ -165,21 +168,20 @@ namespace popup {
             }
         };
 
-
         /**
-         * Breath-first search to find the residual of the shortest path (in number of edges) 
+         * Breath-first search to find the residual of the shortest path (in number of edges)
          * from source to sink. Will return 0 if there is no path with any residual.
          */
         std::pair<Flow, Weight> bfs(
                 size_t source,
                 size_t sink,
                 std::vector<Edge<Flow, Weight>*> &came_from
-                ) {
-            std::vector<bool> visited(num_nodes_, false);
-            std::vector<Flow> min_residual(num_nodes_, std::numeric_limits<Flow>::max());
+        ) {
+            std::vector<bool> visited(num_nodes(), false);
+            std::vector<Flow> min_residual(num_nodes(), std::numeric_limits<Flow>::max());
 
-            if (came_from.size() < num_nodes_) {
-                came_from.resize(num_nodes_);
+            if (came_from.size() < num_nodes()) {
+                came_from.resize(num_nodes());
             }
 
             std::queue<size_t> queue;
@@ -214,25 +216,24 @@ namespace popup {
 
         /**
          * D´Esopo-Pape search to find the residual and weight of the shortest
-         * paths (in terms of weight) from source to sink. Will return 0 if 
+         * paths (in terms of weight) from source to sink. Will return 0 if
          * there is no path with any residual.
          */
         std::pair<Flow, Weight> desopo_pape(
             size_t from,
             size_t to,
             std::vector<Edge<Flow, Weight>*> &came_from
-
         ) {
             std::vector<Weight> distances(
-                num_nodes_,
+                num_nodes(),
                 std::numeric_limits<Weight>::max()
             );
             std::vector<Flow> min_residual(
-                num_nodes_,
+                num_nodes(),
                 std::numeric_limits<Flow>::max()
             );
             distances[from] = 0;
-            std::vector<int> status(num_nodes_, 2);
+            std::vector<int> status(num_nodes(), 2);
             std::deque<size_t> que;
             que.push_back(from);
             std::fill(came_from.begin(), came_from.end(), nullptr);
@@ -243,15 +244,15 @@ namespace popup {
                 status[u] = 0;
 
                 for (auto& edge : list_[u]) {
-                    if (edge->residual() > 0 
+                    if (edge->residual() > 0
                         && distances[edge->to()] > distances[u] + edge->weight()) {
 
                         distances[edge->to()] =  distances[u] + edge->weight();
                         came_from[edge->to()] = edge;
-                         min_residual[edge->to()] = std::min(
-                                min_residual[edge->from()],
-                                edge->residual()
-                            );
+                        min_residual[edge->to()] = std::min(
+                            min_residual[edge->from()],
+                            edge->residual()
+                        );
                         if (status[edge->to()] == 2) {
                             status[edge->to()] = 1;
                             que.push_back(edge->to());
@@ -271,8 +272,8 @@ namespace popup {
 
         /**
          * Bellman Ford search to find the residual and weight of the shortest
-         * paths (in terms of weight) from source to sink. Will return 0 if 
-         * there is no path with any residual. 
+         * paths (in terms of weight) from source to sink. Will return 0 if
+         * there is no path with any residual.
          * TODO: A work in progress
          */
         std::pair<Flow, Weight> bellman_ford(
@@ -281,11 +282,11 @@ namespace popup {
             std::vector<Edge<Flow, Weight>*> &came_from
         ) {
             std::vector<Weight> distances(
-                num_nodes_,
+                num_nodes(),
                 std::numeric_limits<Weight>::max()
             );
             std::vector<Flow> min_residual(
-                num_nodes_,
+                num_nodes(),
                 std::numeric_limits<Flow>::max()
             );
             distances[from] = 0;
@@ -294,20 +295,19 @@ namespace popup {
                 Edge<Flow, Weight>(0, from, std::numeric_limits<Flow>::max(), 0);
             came_from[from] = &dummy_edge;
 
-            for (size_t n = 0; n < num_nodes_ - 1; n++) {
-                for (size_t i = 0; i < num_nodes_; i++) {
+            for (size_t n = 0; n < num_nodes() - 1; n++) {
+                for (size_t i = 0; i < num_nodes(); i++) {
                     for (auto& edge : list_[i]) {
-                        if (distances[edge->from()] == std::numeric_limits<Weight>::max()) {
-                            continue;
-                        }
-                        auto trav_cost = distances[edge->from()] + edge->weight();
-                        if (trav_cost < distances[edge->to()] && edge->residual() > 0) {
-                            came_from[edge->to()] = edge;
-                            distances[edge->to()] = trav_cost;
-                            min_residual[edge->to()] = std::min(
-                                min_residual[edge->from()],
-                                edge->residual()
-                            );
+                        if (distances[edge->from()] != std::numeric_limits<Weight>::max()) {
+                            auto trav_cost = distances[edge->from()] + edge->weight();
+                            if (trav_cost < distances[edge->to()] && edge->residual() > 0) {
+                                came_from[edge->to()] = edge;
+                                distances[edge->to()] = trav_cost;
+                                min_residual[edge->to()] = std::min(
+                                    min_residual[edge->from()],
+                                    edge->residual()
+                                );
+                            }
                         }
                     }
                 }
@@ -321,8 +321,8 @@ namespace popup {
 
         /**
          * Dijkstra search to find the residual and weight of the shortest
-         * paths (in terms of weight) from source to sink. Will return 0 if 
-         * there is no path with any residual. Does not work with 
+         * paths (in terms of weight) from source to sink. Will return 0 if
+         * there is no path with any residual. Does not work with
          * Ford Fulkerson, because it cannot handle negative weight.
          */
         std::pair<Flow, Weight> dijkstra(
@@ -339,13 +339,19 @@ namespace popup {
                 std::pair<Edge<Flow,Weight>*, Weight>,
                 std::vector<std::pair<Edge<Flow,Weight>*, Weight>>,
                 decltype(cmp)> queue(cmp);
-            std::vector<Weight> distances(num_nodes_, std::numeric_limits<Weight>::max());
-            std::vector<bool> visited(num_nodes_, false);
-            std::vector<Flow> min_residual(num_nodes_, std::numeric_limits<Flow>::max());
+
+            std::vector<Weight> distances(num_nodes(), std::numeric_limits<Weight>::max());
+            std::vector<bool> visited(num_nodes(), false);
+            std::vector<Flow> min_residual(num_nodes(), std::numeric_limits<Flow>::max());
 
             distances[from] = 0;
             Edge<Flow, Weight> dummy_edge =
-                Edge<Flow, Weight>(0, from, std::numeric_limits<Flow>::max(), 0);
+                Edge<Flow, Weight>(
+                    0,
+                    from,
+                    std::numeric_limits<Flow>::max(),
+                    0
+                );
             queue.emplace(std::make_pair(&dummy_edge,0));
             came_from[from] = &dummy_edge;
 
@@ -354,6 +360,7 @@ namespace popup {
                 queue.pop();
                 auto current_edge = e.first;
                 auto current_node = current_edge->to();
+
                 if (visited[current_node]) {
                     continue;
                 }
@@ -365,7 +372,6 @@ namespace popup {
                 visited[current_node] = true;
 
                 auto cost = e.second;
-
                 if (current_node == to) {
                     break;
                 }
@@ -395,7 +401,7 @@ namespace popup {
         /**
          *  Ford Fulkerson algorithm it find the maximum flow between
          *  the source and the sink.
-         *  If used with D´Esopo-Pape, it will return the 
+         *  If used with D´Esopo-Pape, it will return the
          *  minimum cost maximum flow.
          */
         std::pair<Flow, Weight> ford_fulkerson(
@@ -406,7 +412,7 @@ namespace popup {
                 size_t,
                 std::vector<Edge<Flow, Weight>*>&)> path_algo
         ) {
-            std::vector<Edge<Flow, Weight>*> came_from(num_nodes_, nullptr);
+            std::vector<Edge<Flow, Weight>*> came_from(num_nodes(), nullptr);
             Flow flow = 0;
             Weight cost = 0;
             for (std::pair<Flow, Weight> res = path_algo(source, sink, came_from);
@@ -454,7 +460,7 @@ namespace popup {
 
         /**
          *  Return a set of nodes U of the minimum cut (in terms of weight)
-         *  given a source and a sink. Uses DFS to find the set U of nodes 
+         *  given a source and a sink. Uses DFS to find the set U of nodes
          *  reachable from the source.
          */
         std::pair<std::vector<size_t>, Flow> st_cut(
@@ -463,7 +469,7 @@ namespace popup {
         ) {
             Flow max_flow = edmond_karp(source, sink);
             std::vector<size_t> result;
-            
+
             dfs(source, [&](size_t node) {
                             result.push_back(node);
                         });
