@@ -1,15 +1,11 @@
 // Author: Tomas Möre, Marcus Östling 2019
-
-#include <iostream>
 #include <functional>
 #include <optional>
 #include <vector>
-#include <cassert>
 #include <set>
 #include <queue>
 #include <limits>
 #include <algorithm>
-#include <variant>
 #include <unordered_map>
 #include <unordered_set>
 #include <memory>
@@ -18,7 +14,7 @@
 namespace popup {
 
     /**
-     * Edge class used internaly for for the bellow graph class. Contains
+     * Edge class used internaly for for the below graph class. Contains
      * information about where and to the edges go as well as a weight.
      */
     template <class T>
@@ -28,8 +24,7 @@ namespace popup {
         T weight_ = 0;
 
     public:
-        Edge() {
-        }
+        Edge() {}
         Edge(size_t from, size_t to, T weight) {
             from_ = from;
             to_ = to;
@@ -57,11 +52,11 @@ namespace popup {
      */
     template<typename T>
     class BellmanFordResult {
-        // Flag for checking if the result contains any cylces whatsoever.
+        // Flag for checking if the result contains any cycles.
         bool contains_cycles_;
         // The starting node associated with this result
         size_t start_node_;
-        // Vector of ditances to nodes from the starting node
+        // Vector of distances to nodes from the starting node
         std::vector<T> distances_;
         // Vector of nodes that were predecessors to the current node in found
         // path. OBS: there may be infinite cycles.
@@ -85,7 +80,7 @@ namespace popup {
             inf_reachable_ = inf_reachable;
         }
 
-        // Returns ture if the result some cycle.
+        // Returns true if the result some cycle.
         bool contains_cycles() const {
             return contains_cycles_;
         }
@@ -102,7 +97,8 @@ namespace popup {
 
         // Returns true if it is possible to reach a node from the source node
         bool reachable(size_t node) const {
-            return node < distances_.size() && distances_[node] != std::numeric_limits<T>::max();
+            return node < distances_.size() 
+                && distances_[node] != std::numeric_limits<T>::max();
         }
 
         // Returns the distance to a specific node if it is reachable and the
@@ -150,7 +146,10 @@ namespace popup {
         bool graph_modified_ = false;
 
         // Map keeping track of previous results of bellman ford runs.
-        std::unordered_map<size_t, std::shared_ptr<BellmanFordResult<T>>> bellman_ford_cache_;
+        std::unordered_map<
+            size_t, 
+            std::shared_ptr<BellmanFordResult<T>>
+        > bellman_ford_cache_;
 
         /**
          * Internal method to get edges originating for a particular node
@@ -170,7 +169,7 @@ namespace popup {
         }
 
         /**
-         *  Method that traverses all edges originating from a particulat node.
+         *  Method that traverses all edges.
          */
         void traverse_edges(std::function<void(Edge<T>&)> f) {
             for(auto &outer : list_) {
@@ -204,7 +203,8 @@ namespace popup {
             return num_edges_;
         }
 
-        /** This part specifies generic algorithms on graphs
+        /** 
+         * This part specifies generic algorithms on graphs
          * BFS that runs f on every node it visits. f is given two arguments,
          * first is the node when found and second is the distance to the given
          * node from the start.
@@ -262,13 +262,23 @@ namespace popup {
          */
         std::optional<std::pair<std::vector<size_t>, T>>
         dijkstra(size_t from, size_t to) const {
-            const auto cmp = [](const std::pair<size_t, T>& a, const std::pair<size_t, T>& b) {
-                                 return a.second > b.second;
-                             };
-            std::priority_queue<std::pair<size_t, T>, std::vector<std::pair<size_t, T>>, decltype(cmp)> queue(cmp);
+            const auto cmp = [](
+                const std::pair<size_t, T>& a, 
+                const std::pair<size_t, T>& b
+            ) {
+                return a.second > b.second;
+            };
+            std::priority_queue<
+                std::pair<size_t, T>, 
+                std::vector<std::pair<size_t, T>>, 
+                decltype(cmp)
+            > queue(cmp);
             std::vector<T> distances(num_nodes(), std::numeric_limits<T>::max());
             // size_t::max() is the value representing that a node never has been viewed
-            std::vector<size_t> came_from(num_nodes(), std::numeric_limits<size_t>::max());
+            std::vector<size_t> came_from(
+                num_nodes(), 
+                std::numeric_limits<size_t>::max()
+            );
             std::vector<bool> visited(num_nodes(), 0);
 
             distances[from] = 0;
@@ -319,7 +329,7 @@ namespace popup {
         };
 
         /**
-        * Bellman ford returns a variant of either the result or a bool. If the
+        * Bellman ford returns a shared_ptr to a BellmanFordResult. If the
         * boolean is set to true if there simply was no path. It is false if a
         * negative cycle was detected.  If the pair is returned it contains the
         * shortest path as a vector and the weight of going there.
@@ -405,12 +415,16 @@ namespace popup {
 
         std::vector<std::vector<T>> all_pairs_shortest_paths() {
 
-            std::vector<std::vector<T>> result(num_nodes(), std::vector<T>(num_nodes(), std::numeric_limits<T>::max()));
+            std::vector<std::vector<T>> result(
+                num_nodes(), 
+                std::vector<T>(num_nodes(), std::numeric_limits<T>::max())
+            );
 
             // Assing initial edge costs
             for (auto& inner : list_) {
                 for (auto& edge : inner) {
-                    result[edge.from()][edge.to()] = std::min(result[edge.from()][edge.to()], edge.weight());
+                    result[edge.from()][edge.to()] = 
+                        std::min(result[edge.from()][edge.to()], edge.weight());
                 }
             }
 
@@ -428,7 +442,10 @@ namespace popup {
                         if (result[i][k] != std::numeric_limits<T>::max()
                             && result[k][j] != std::numeric_limits<T>::max())
                         {
-                            result[i][j]  = std::min(result[i][j], result[i][k] + result[k][j]);
+                            result[i][j] = std::min(
+                                result[i][j], 
+                                result[i][k] + result[k][j]
+                            );
                         }
                     }
                 }
@@ -436,6 +453,11 @@ namespace popup {
             return result;
         }
 
+        /**
+         *  Kurskal's algorithm
+         *  Returns the minimum spanning tree and its cost if one is found, 
+         *  else an empty result.
+         */
         std::optional<std::pair<T,std::vector<Edge<T>>>> kruskal() {
             std::vector<Edge<T>> all_edges(num_edges());
             int total_edge_count = 0;
@@ -466,81 +488,10 @@ namespace popup {
             return std::nullopt;
         }
 
-        std::optional<std::vector<size_t>> eulerian_path_undirected() {
-            size_t odd_index = 0;
-            size_t odds[2] = {
-                              std::numeric_limits<size_t>::max(),
-                              std::numeric_limits<size_t>::max()
-            };
-
-            for (auto &edges : list_) {
-                size_t degree = list_.size();
-                if (degree % 2 == 1) {
-                    odds[odd_index++] = edges[0].from();
-                }
-                if (odd_index > 2) {
-                    //                    std::cerr << "Too many odds\n";
-                    return std::nullopt;
-                }
-            }
-
-            bool odds_set[2] = {
-                                odds[0] != std::numeric_limits<size_t>::max(),
-                                odds[1] != std::numeric_limits<size_t>::max()
-            };
-
-            if(odds_set[0] ^ odds_set[1]){
-                //                std::cerr << "Same odds\n";
-                return std::nullopt;
-            }
-
-            if(odds_set[0] && odds_set[1]) {
-                this->add_bi_edge(odds[0], odds[1], 0);
-            }
-
-            // Russian algorithm
-            std::stack<size_t> stack;
-            std::vector<size_t> result;
-            std::unordered_set<void*> removed_edge;
-            std::vector<bool> visited(num_nodes());
-            stack.push(0);
-            while (!stack.empty()) {
-                size_t v = stack.top();
-                visited[v] = true;
-                size_t degree = 0;
-                for (auto &edge : list_[v]) {
-                    if(removed_edge.find((void*)&edge) == removed_edge.end()) {
-                        degree++;
-                    }
-                }
-                //                std::cerr << v << " degree: " << degree << std::endl;
-                if (degree == 0) {
-                    result.push_back(v);
-                    stack.pop();
-                } else {
-                    for (auto &edge : list_[v]) {
-                        if(removed_edge.find((void*)&edge) == removed_edge.end()) {
-                            stack.push(edge.to());
-                            removed_edge.insert((void*)(&edge));
-                        }
-                    }
-                }
-            }
-
-            for(bool v : visited) {
-                if(!v) {
-                    //                    std::cerr << "Did not visit every node " << v << std::endl;
-                    return std::nullopt;
-                }
-            }
-
-            return result;
-        }
-
         /**
-         * Returns an eulerian cycle /path if it exists otherwise empty.  If an
+         * Returns an eulerian cycle/path if it exists otherwise empty.  If an
          * eulerian cycle exists the first and last node of the cycle will be
-         * the same.
+         * the same. Hierholzer's algorithm.
          */
         std::optional<std::vector<size_t>> eulerian_path() {
             size_t odds_count = 0;
@@ -584,8 +535,6 @@ namespace popup {
             }
 
             bool missing_edge = odds_set[0] && odds_set[1];
-
-
 
             std::vector<size_t> path;
             path.reserve(num_nodes());
