@@ -189,13 +189,12 @@ namespace popup {
         };
 
         /**
-         *
+         * Adds an edge to the graph. Will invalidate any caches.
          */
-        bool add_edge(size_t from, size_t to, T weight) {
+        void add_edge(size_t from, size_t to, T weight) {
             graph_modified_ = true;
             list_[from].emplace_back(Edge<T>(from, to, weight));
             num_edges_++;
-            return true;
         };
 
         size_t num_nodes() const {
@@ -205,11 +204,11 @@ namespace popup {
             return num_edges_;
         }
 
-        // This part specifies generic algorithms on graphs
-
-        // BFS that runs f on every node it visits. f is given two arguments,
-        // first is the node when found and second is the distance to the given
-        // node from the start.
+        /** This part specifies generic algorithms on graphs
+         * BFS that runs f on every node it visits. f is given two arguments,
+         * first is the node when found and second is the distance to the given
+         * node from the start.
+         */
         void bfs(size_t start, std::function<void(size_t node, size_t distance)> f) const {
             std::queue<std::pair<size_t, size_t>> queue;
             std::vector<bool> visited(num_nodes(), false);
@@ -231,6 +230,9 @@ namespace popup {
             }
         }
 
+        /**
+         * Standardied DFS. Will run the function f each time a node is visited
+         */
         void dfs(size_t start, std::function<void(size_t)> f) const {
             std::stack<size_t> stack;
             stack.push(start);
@@ -251,6 +253,13 @@ namespace popup {
             }
         };
 
+
+        /**
+         * Standard dijkstra on the path. May not be run on graphs with negative
+         * weighs.  If it can reach the target the value returns a pair of the
+         * path and the total weight of the path. If there are no path the
+         * result is empty.
+         */
         std::optional<std::pair<std::vector<size_t>, T>>
         dijkstra(size_t from, size_t to) const {
             const auto cmp = [](const std::pair<size_t, T>& a, const std::pair<size_t, T>& b) {
@@ -273,6 +282,7 @@ namespace popup {
                 if (visited[current_node]) {
                     continue;
                 }
+
                 visited[current_node] = true;
                 auto cost = distances[current_node];
 
@@ -308,10 +318,12 @@ namespace popup {
             }
         };
 
-        // Bellman ford returns a variant of either the result or a bool. If the
-        // boolean is set to true if there simply was no path. It is false if a
-        // negative cycle was detected.  If the pair is returned it contains the
-        // shortest path as a vector and the weight of going there.
+        /**
+        * Bellman ford returns a variant of either the result or a bool. If the
+        * boolean is set to true if there simply was no path. It is false if a
+        * negative cycle was detected.  If the pair is returned it contains the
+        * shortest path as a vector and the weight of going there.
+        */
         std::shared_ptr<BellmanFordResult<T>>
         bellman_ford(size_t from) {
             // Asking for a element outside the graph
@@ -525,17 +537,11 @@ namespace popup {
             return result;
         }
 
-
-        // void eulerian_path_help(std::vector<size_t>& path, std::unordered_set<void*>& used_edges, size_t node) const {
-        //     for (auto& edge : list_[node]) {
-        //         if (used_edges.find((void*)&edge) == used_edges.end()) {
-        //             used_edges.insert((void*)&edge);
-        //             eulerian_path_help(path, used_edges, edge.to());
-        //         }
-        //     }
-        //     path.push_back(node);
-        // }
-
+        /**
+         * Returns an eulerian cycle /path if it exists otherwise empty.  If an
+         * eulerian cycle exists the first and last node of the cycle will be
+         * the same.
+         */
         std::optional<std::vector<size_t>> eulerian_path() {
             size_t odds_count = 0;
             size_t odds[2] = {
@@ -562,7 +568,8 @@ namespace popup {
                     odds_count++;
                 }
 
-                if (odds_count > 2 || in_degree[i] >= out_degree + 2 || in_degree[i] + 2 <= out_degree) {
+                if (odds_count > 2 || in_degree[i] >= out_degree + 2
+                    || in_degree[i] + 2 <= out_degree) {
                     return std::nullopt;
                 }
             }
@@ -573,15 +580,12 @@ namespace popup {
             };
 
             if(odds_set[0] ^ odds_set[1]){
-                //std::cerr << "Same odds\n";
                 return std::nullopt;
             }
 
             bool missing_edge = odds_set[0] && odds_set[1];
 
-            // if(odds_set[0] && odds_set[1]) {
-            //     add_edge(odds[1], odds[0], 0);
-            // }
+
 
             std::vector<size_t> path;
             path.reserve(num_nodes());
