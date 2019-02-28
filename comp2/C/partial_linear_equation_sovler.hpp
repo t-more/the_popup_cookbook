@@ -1,0 +1,1 @@
+../../the_popup_cookbook/cpp_lib/partial_linear_equation_sovler.hpp
