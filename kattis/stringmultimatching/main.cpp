@@ -43,7 +43,7 @@ int main() {
         for (auto [pattern_idx, text_idx] : res) {
             string str = patterns[pattern_idx];
             for(auto i : copy_of[str]) {
-                result[i].push_back(text_idx);
+                result[i].push_back((int)text_idx);
             }
         }
 
