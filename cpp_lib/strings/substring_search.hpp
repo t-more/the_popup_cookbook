@@ -9,7 +9,7 @@ namespace popup {
 
 template <typename Assoc>
 class AhoCorasickAutomaton {
-    const static int ALPHABET_LENGTH = 256;
+    const static int ALPHABET_LENGTH = 128;
     class Vertex {
     public:
         Assoc assoc_;
