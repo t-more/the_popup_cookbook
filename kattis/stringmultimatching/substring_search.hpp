@@ -3,6 +3,7 @@
 #include <string>
 #include <algorithm>
 #include <utility>
+#include <queue>
 
 namespace popup {
 
@@ -12,18 +13,12 @@ class AhoCorasickAutomaton {
     class Vertex {
     public:
         Assoc assoc_;
-        int parent_ = -1;
-        char parent_char_;
         bool leaf_ = false;
-        int suffix_link_ = -1;
+        int fail_link_ = -1;
         int exit_link_ = -1;
         int transition_[ALPHABET_LENGTH];
-        int next_[ALPHABET_LENGTH];
 
-        Vertex(int parent=0, char parent_char='$') {
-            parent_ = parent;
-            parent_char_ = parent_char; 
-            std::fill(next_, next_+ALPHABET_LENGTH, -1);
+        Vertex() {
             std::fill(transition_, transition_+ALPHABET_LENGTH, -1);
         };
 
@@ -32,15 +27,48 @@ class AhoCorasickAutomaton {
     std::vector<Vertex> automaton = std::vector<Vertex>(1);
     int current_index = 0;
 
+public:
+
+    void build_automaton() {
+        for (size_t c = 0; c < ALPHABET_LENGTH; c++) {
+            if (automaton[0].transition_[c] == -1) {
+                automaton[0].transition_[c] = 0;
+            }
+        }
+        std::queue<size_t> q;
+
+        for (size_t c = 0; c < ALPHABET_LENGTH; c++) {
+            auto next = automaton[0].transition_[c];
+            if (next != 0) {
+                automaton[next].fail_link_ = 0;
+                q.push(next);
+            }
+        }
+
+        while (!q.empty()) {
+            auto state = q.front();
+            q.pop();
+            for (size_t c = 0; c < ALPHABET_LENGTH; c++) {
+                auto fail = automaton[state].fail_link_;
+                while (automaton[fail].transition_[c] == -1) {
+                    fail = automaton[fail].fail_link_;
+                }
+                fail = automaton[fail].transition_[c];
+                automaton[automaton[state].transition_[c]].fail_link_ = fail;
+                q.push(automaton[state].transition_[c]);
+            }
+        }
+    }
+
     int get_exit(int idx) {
         if(automaton[idx].exit_link_ == -1) {
-            int i = get_link(idx);
+            int i = automaton[idx].fail_link_;
             while(i > 0) {
                 if(automaton[i].leaf_) {
                     automaton[idx].exit_link_ = i;
                     break;
                 } else {
-                    i = get_link(i);
+                    i = automaton[i].fail_link_;
                 }
             }
             if (automaton[idx].exit_link_ == -1) {
@@ -50,71 +78,47 @@ class AhoCorasickAutomaton {
         return automaton[idx].exit_link_;
     }
 
-    int get_link(int idx) {
-        if (automaton[idx].suffix_link_ == -1) {
-            if (idx == 0 || automaton[idx].parent_ == 0) {
-                automaton[idx].suffix_link_ = 0;
-            } else {
-                automaton[idx].suffix_link_ = transition(
-                    get_link(automaton[idx].parent_), 
-                    automaton[idx].parent_char_
-                );
-            }
-        }
-        return automaton[idx].suffix_link_;
-    }
 
-    int transition(int idx, char c) {
-        if (automaton[idx].transition_[c] == -1) {
-            if (automaton[idx].next_[c] != -1) {
-                automaton[idx].transition_[c] = automaton[idx].next_[c];
-            } else {
-                if (idx == 0) {
-                    automaton[idx].transition_[c] = 0;
-                } else {
-                    automaton[idx].transition_[c] = transition(
-                        get_link(idx),
-                        c
-                    );
-                }
-            }
-        }
-        return automaton[idx].transition_[c];
-    }
-
-public:
     std::optional<std::vector<Assoc>> feed_char(char c) {
-        current_index = transition((int)current_index, c);
+        //        current_index = transition((int)current_index, c);
+        int next_state = current_index;
+        while (automaton[next_state].transition_[c] != -1) {
+            next_state = automaton[next_state].fail_link_;
+        }
+        current_index = automaton[next_state].transition_[c];
+
         if (automaton[current_index].leaf_ || get_exit(current_index) > 0) {
-            int idx = automaton[current_index].leaf_ ? 
+            int idx = automaton[current_index].leaf_ ?
                 current_index :
                 get_exit(current_index);
             std::vector<Assoc> result;
             while(idx > 0 && automaton[idx].leaf_) {
                 result.push_back(automaton[idx].assoc_);
-                idx = get_link(idx);
+                idx = automaton[idx].fail_link_;
             }
             return result;
         } else {
-            if(exit > 0) {
-
-            }
             return std::nullopt;
         }
     }
 
     void add_string(const std::string &str, Assoc assoc) {
-        int idx = 0; 
+        int idx = 0;
         for (char c : str) {
-            if (automaton[idx].next_[c] == -1) {
-                automaton[idx].next_[c] = (int)automaton.size();
-                automaton.emplace_back(idx, c);
+            if (automaton[idx].transition_[c] == -1) {
+                automaton[idx].transition_[c] = (int)automaton.size();
+                automaton.emplace_back();
             }
-            idx = automaton[idx].next_[c];
+            idx = automaton[idx].transition_[c];
         }
         automaton[idx].assoc_ = assoc;
         automaton[idx].leaf_ = true;
     }
+
+
+
+
+
 };
 
 /**
@@ -133,14 +137,15 @@ std::vector<std::pair<size_t,size_t>> get_occurences(
 
     for (auto itr = pattern_begin; itr != pattern_end; itr++) {
         automaton.add_string(
-            *itr, 
+            *itr,
             std::make_pair(
-                (size_t)(itr - pattern_begin), 
+                (size_t)(itr - pattern_begin),
                 (*itr).size()
             )
         );
     }
-    
+    automaton.build_automaton();
+
     for (auto itr = text_begin; itr != text_end; itr++) {
         auto opt_res = automaton.feed_char(*itr);
         if (opt_res.has_value()) {
