@@ -71,7 +71,7 @@ public:
                     break;
                 } else if(automaton[i].exit_link_ != -1) {
                     automaton[idx].exit_link_ = automaton[i].exit_link_;
-                    break; 
+                    break;
                 } else {
                     i = automaton[i].fail_link_;
                 }
@@ -90,17 +90,30 @@ public:
             next_state = automaton[next_state].fail_link_;
         }
         current_index = automaton[next_state].transition_[(int)c];
-
+        std::vector<Assoc> result;
+        std::set<Assoc> s;
         // automaton[state].fail_link_
-        if (automaton[current_index].leaf_ || get_exit(current_index) > 0) {
-             int idx = automaton[current_index].leaf_ ?
-                 current_index :
-                 get_exit(current_index);
-            std::vector<Assoc> result;
+        if (automaton[current_index].leaf_) {
+            int idx = current_index;
             while(idx > 0 && automaton[idx].leaf_) {
-                result.push_back(automaton[idx].assoc_);
+                if (s.find(automaton[idx].assoc_) == s.end()) {
+                    result.push_back(automaton[idx].assoc_);
+                    s.insert(automaton[idx].assoc_);
+                }
                 idx = automaton[idx].fail_link_;
             }
+        }
+        if (get_exit(current_index) > 0) {
+            int idx = get_exit(current_index);
+            while(idx > 0 && automaton[idx].leaf_) {
+                if (s.find(automaton[idx].assoc_) == s.end()) {
+                    result.push_back(automaton[idx].assoc_);
+                    s.insert(automaton[idx].assoc_);
+                }
+                idx = get_exit(idx);
+            }
+        }
+        if (!result.empty()) {
             return result;
         } else {
             return std::nullopt;
