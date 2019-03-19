@@ -69,6 +69,9 @@ public:
                 if(automaton[i].leaf_) {
                     automaton[idx].exit_link_ = i;
                     break;
+                } else if(automaton[i].exit_link_ != -1) {
+                    automaton[idx].exit_link_ = automaton[i].exit_link_;
+                    break; 
                 } else {
                     i = automaton[i].fail_link_;
                 }

@@ -29,8 +29,8 @@ int main() {
             p.end()
         );
 
-        for(auto i : res) {
-            cout << i << " ";
+        for(auto &i : res) {
+            cout << i.second << " ";
         }
         cout << "\n";
     }
