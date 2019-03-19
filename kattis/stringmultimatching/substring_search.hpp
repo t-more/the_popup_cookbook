@@ -41,6 +41,7 @@ public:
             auto next = automaton[0].transition_[c];
             if (next != 0) {
                 automaton[next].fail_link_ = 0;
+                std::cerr << "Pushing: " << next << std::endl;
                 q.push(next);
             }
         }
@@ -49,13 +50,15 @@ public:
             auto state = q.front();
             q.pop();
             for (size_t c = 0; c < ALPHABET_LENGTH; c++) {
-                auto fail = automaton[state].fail_link_;
-                while (automaton[fail].transition_[c] == -1) {
-                    fail = automaton[fail].fail_link_;
+                if (automaton[state].transition_[c] != -1) {
+                    auto fail = automaton[state].fail_link_;
+                    while (automaton[fail].transition_[c] == -1) {
+                        fail = automaton[fail].fail_link_;
+                    }
+                    fail = automaton[fail].transition_[c];
+                    automaton[automaton[state].transition_[c]].fail_link_ = fail;
+                    q.push(automaton[state].transition_[c]);
                 }
-                fail = automaton[fail].transition_[c];
-                automaton[automaton[state].transition_[c]].fail_link_ = fail;
-                q.push(automaton[state].transition_[c]);
             }
         }
     }
@@ -87,10 +90,12 @@ public:
         }
         current_index = automaton[next_state].transition_[c];
 
-        if (automaton[current_index].leaf_ || get_exit(current_index) > 0) {
-            int idx = automaton[current_index].leaf_ ?
-                current_index :
-                get_exit(current_index);
+        // automaton[state].fail_link_
+        if (automaton[current_index].leaf_) {
+            // int idx = automaton[current_index].leaf_ ?
+            //     current_index :
+            //     get_exit(current_index);
+            int idx = current_index;
             std::vector<Assoc> result;
             while(idx > 0 && automaton[idx].leaf_) {
                 result.push_back(automaton[idx].assoc_);
@@ -109,6 +114,7 @@ public:
                 automaton[idx].transition_[c] = (int)automaton.size();
                 automaton.emplace_back();
             }
+
             idx = automaton[idx].transition_[c];
         }
         automaton[idx].assoc_ = assoc;
