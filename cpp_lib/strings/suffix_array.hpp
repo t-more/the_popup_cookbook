@@ -6,14 +6,12 @@
 
 #define ALPHABET_SIZE 256
 namespace popup {
-    class SuffixArray {
+
+    class CycleArray {
         std::vector<size_t> arr_;
-        std::string string_;
 
     public:
-        SuffixArray(const std::string& str) {
-            string_ = std::string(str);
-
+        CycleArray(const std::string& str) {
             arr_ = std::vector<size_t>(str.size());
             std::vector<size_t>
                 position(str.size()),
@@ -85,18 +83,38 @@ namespace popup {
             arr_.erase(arr_.begin());
         }
 
-        size_t get_suffix(size_t i) {
+        size_t at(const size_t i) const {
             return arr_.at(i);
         }
 
-        void print_order() {
-            for (auto start : arr_) {
-                for (size_t i = start; i < string_.size(); i++) {
-                    std::cout << string_[i];
-                }
-                std::cout << std::endl;
-            }
+        size_t operator[](const size_t i) const {
+            return at(i);
+        }
+
+        std::vector<size_t> as_vector() const {
+            return arr_;
         }
     };
 
+    class SuffixArray {
+        std::vector<size_t> arr_;
+        std::string string_;
+    public:
+
+        SuffixArray(const std::string& str) {
+            string_ = std::string(str);
+            string_.push_back('\0');
+            arr_ = CycleArray(string_).as_vector();
+            arr_.erase(arr_.begin());
+        }
+        size_t at(size_t i) const {
+            return arr_.at(i);
+        }
+        size_t operator[](size_t i) const {
+            return at(i);
+        }
+        std::vector<size_t> as_vector() const {
+            return arr_;
+        }
+    };
 }
