@@ -17,6 +17,7 @@ int main () {
             cin >> order;
             cout << sa.get_suffix(order) << " ";
         }
+        cin.ignore();
         cout << "\n";
     }
 }

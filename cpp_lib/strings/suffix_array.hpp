@@ -20,7 +20,7 @@ namespace popup {
             for (size_t i = 0; i < str.size(); i++) {
                 count[str[i]]++;
             }
-            for (size_t i = 1; i <ALPHABET_SIZE; i++) {
+            for (size_t i = 1; i < ALPHABET_SIZE; i++) {
                 count[i] += count[i-1] ;
             }
             for (size_t i = 0; i < str.size(); i++) {
