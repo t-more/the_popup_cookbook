@@ -8,49 +8,51 @@
 #include <queue>
 #include <set>
 #include <array>
+#include <unordered_set>
 
 namespace popup {
+    template<unsigned int Start, unsigned int End>
+    class Alphabet {
+    public:
+        Alphabet(){}
+
+        char cbegin() const {
+            return Start;
+        }
+        char cend() const {
+            return End;
+        }
+    };
 
 
     template<unsigned int S>
     class AlphabetArr
     {
 
-        // This was a halfed arsed attempt to make an interator that became too boring
+        // this was a halfed arsed attempt to make an interator that became too boring
         // left in case we want to finnish it
 
-        // class AlphabetArrMapIter  : public std::iterator<std::random_access_iterator_tag,
+        // class alphabetarrmapiter  : public std::iterator<std::random_access_iterator_tag,
         //                                      std::pair<char, int>,
         //                                      ptrdiff_t,
         //                                      std::pair<char, int>*,
         //                                      std::pair<char, int>&> {
-        //     const std::array<int, S>& iter_;
+        //     const std::array<int, s>& iter_;
         //     size_t offset_;
-        //     AlphabetArrMapIter(const std::array<int, S>& arr, size_t offset) {
+        //     alphabetarrmapiter(const std::array<int, s>& arr, size_t offset) {
         //         iter_ = arr;
         //         offset_ = offset;
         //     }
 
-        //     AlphabetArrMapIter operator++() {
+        //     alphabetarrmapiter operator++() {
         //         size_t prev_idx = offset_++;
 
-        //         return AlphabetArrMapIter(iter_, offset_);
+        //         return alphabetarrmapiter(iter_, offset_);
         //     }
 
         // }
 
-        // This is appently not a proper iterator... But i do not care, shitty ugly c++.
-        class Alphabet {
-        public:
-            Alphabet(){}
-
-            char cbegin() const {
-                return 0;
-            }
-            char cend() const {
-                return S;
-            }
-        };
+        // this is appently not a proper iterator... but i do not care, shitty ugly c++.
 
         std::array<int, S> container_;
     public:
@@ -62,8 +64,8 @@ namespace popup {
             return container_[c] != -1;
         }
 
-        static Alphabet alphabet()  {
-            return Alphabet();
+        static Alphabet<0, S> alphabet()  {
+            return Alphabet<0, S>();
         }
 
         int& operator[](const char c) {
@@ -73,32 +75,54 @@ namespace popup {
 
     using AsciiArr = AlphabetArr<128>;
 
-    // The automaton will work using the alphabet container to keep track of
-    // various insertions. Morespecifically the [] operator i expected to be
-    // properly implemented for this. Each character shall be mapped to an index
-    // as specified by the automaton. A simple example of this is tue AsciiArr
-    // defined above. Also note that there must be a function that retrieves the
+    class LowercaseAscii {
+          std::array<int, 10> container_;
+    public:
+        LowercaseAscii(){
+            std::fill(container_.begin(), container_.end(), -1);
+        };
+
+        static Alphabet<97, 123> alphabet()  {
+            return Alphabet<97, 123>();
+        }
+
+        int& operator[](const char c) {
+            return container_[(size_t)(c - 97)];
+        }
+    };
+
+    // the automaton will work using the alphabet container to keep track of
+    // various insertions. morespecifically the [] operator i expected to be
+    // properly implemented for this. each character shall be mapped to an index
+    // as specified by the automaton. a simple example of this is tue asciiarr
+    // defined above. also note that there must be a function that retrieves the
     // alphabet o
 
-    //Secondly each matching string in the language will be
-    // associated with some value. It is expected that this elemnts froms a
+    //secondly each matching string in the language will be
+    // associated with some value. it is expected that this elemnts froms a
     // 'modified' monoid under '+=' and construction.
     template <typename Char, typename AlphabetContainer, typename Assoc>
     class AhoCorasickAutomaton {
-        class Vertex {
+        friend class machresults;
+
+        class vertex {
         public:
             Assoc assoc_;
             bool leaf_ = false;
             int fail_link_ = -1;
             int exit_link_ = -1;
             AlphabetContainer transition_;
-            Vertex() {};
+            vertex() {};
         };
-
-        std::vector<Vertex> automaton = std::vector<Vertex>(1);
+    protected:
+        std::vector<vertex> automaton = std::vector<vertex>(1);
         int current_index = 0;
 
     public:
+
+        size_t automaton_size() const {
+            return automaton.size();
+        }
 
         void build_automaton() {
             const auto alphabet = AlphabetContainer::alphabet();
@@ -157,42 +181,71 @@ namespace popup {
             return automaton[idx].exit_link_;
         }
 
-        std::optional<std::vector<Assoc>> feed_char(Char c) {
+
+
+        class MatchResults {
+            AhoCorasickAutomaton* automaton_;
+            int leaf_idx_;
+            int exit_idx_;
+            std::unordered_set<int> matched_ ;
+
+            int next_idx_ = 0;
+        public:
+
+            MatchResults(AhoCorasickAutomaton* automaton, int index) {
+                automaton_ = automaton;
+                leaf_idx_ = index;
+
+                exit_idx_ = automaton_->get_exit(index);
+                //                matched_ = std::vector<bool>(automaton->automaton_size(), false);
+            }
+
+
+
+            bool has_next() {
+                if (leaf_idx_ > 0 && automaton_->automaton[leaf_idx_].leaf_) {
+                    while(leaf_idx_ > 0 && automaton_->automaton[leaf_idx_].leaf_) {
+                        if (!(matched_.find(leaf_idx_) != matched_.end())) {
+                            next_idx_ = leaf_idx_;
+                            matched_.insert(leaf_idx_);
+                            leaf_idx_ = automaton_->automaton[leaf_idx_].fail_link_;
+                            return true;
+                        }
+                        leaf_idx_ = automaton_->automaton[leaf_idx_].fail_link_;
+                    }
+                }
+                if (exit_idx_ > 0 && automaton_->automaton[exit_idx_].leaf_) {
+                    while(exit_idx_ > 0 && automaton_->automaton[exit_idx_].leaf_) {
+                        if (!(matched_.find(exit_idx_) != matched_.end())) {
+                            next_idx_ = exit_idx_;
+                            matched_.insert(exit_idx_);
+                            //                            matched_[exit_idx_] = true;
+                            exit_idx_ = automaton_->get_exit(exit_idx_);
+                            return true;
+                        }
+                        exit_idx_ = automaton_->get_exit(exit_idx_);
+                    }
+                }
+                return false;
+            }
+
+            Assoc& next() {
+                return automaton_->automaton[next_idx_].assoc_;
+            }
+
+
+        };
+
+        MatchResults feed_char(Char c) {
             //current_index = transition((int)current_index, c);
             int next_state = current_index;
             while (automaton[next_state].transition_[c] == -1) {
                 next_state = automaton[next_state].fail_link_;
             }
             current_index = automaton[next_state].transition_[c];
-            std::vector<Assoc> result;
-            std::set<Assoc> s;
-            // automaton[state].fail_link_
-            if (automaton[current_index].leaf_) {
-                int idx = current_index;
-                while(idx > 0 && automaton[idx].leaf_) {
-                    if (s.find(automaton[idx].assoc_) == s.end()) {
-                        result.push_back(automaton[idx].assoc_);
-                        s.insert(automaton[idx].assoc_);
-                    }
-                    idx = automaton[idx].fail_link_;
-                }
-            }
-            if (get_exit(current_index) > 0) {
-                int idx = get_exit(current_index);
-                while(idx > 0 && automaton[idx].leaf_) {
-                    if (s.find(automaton[idx].assoc_) == s.end()) {
-                        result.push_back(automaton[idx].assoc_);
-                        s.insert(automaton[idx].assoc_);
-                    }
-                    idx = get_exit(idx);
-                }
-            }
-            if (!result.empty()) {
-                return result;
-            } else {
-                return std::nullopt;
-            }
+            return MatchResults(this, current_index);
         }
+
 
         template <typename ForwardItr>
         void add_string(ForwardItr begin, ForwardItr end, Assoc assoc) {
@@ -213,21 +266,22 @@ namespace popup {
 
     };
 
-    //
-    class MatchInfo {
+    class StringMatchInfo {
     public:
         size_t start;
         size_t length;
-        MatchInfo(size_t start, size_t length) : start(start), length(length) {}
-        MatchInfo() : MatchInfo(0,0) {}
 
-        MatchInfo& operator+=(const MatchInfo& other) {
+
+        StringMatchInfo(size_t start, size_t length) : start(start), length(length) {}
+        StringMatchInfo() : StringMatchInfo(0,0) {}
+
+        StringMatchInfo& operator+=(const StringMatchInfo& other) {
             start = other.start;
             length = other.length;
             return *this;
         }
 
-        bool operator<(const MatchInfo& other) const {
+        bool operator<(const StringMatchInfo& other) const {
             return (start < other.start) || (start == other.start && length < other.length);
         }
     };
@@ -242,7 +296,7 @@ namespace popup {
         PatternItr pattern_begin,
         PatternItr pattern_end
     ) {
-        AhoCorasickAutomaton<char, AsciiArr, MatchInfo> automaton;
+        AhoCorasickAutomaton<char, AsciiArr, StringMatchInfo> automaton;
         std::vector<std::pair<size_t, size_t>> match;
 
         for (auto itr = pattern_begin; itr != pattern_end; itr++) {
@@ -250,7 +304,7 @@ namespace popup {
             automaton.add_string(
                 str.cbegin(),
                 str.cend(),
-                MatchInfo(
+                StringMatchInfo(
                     (size_t)(itr - pattern_begin),
                     str.size()
                 )
@@ -261,21 +315,17 @@ namespace popup {
 
         for (auto itr = text_begin; itr != text_end; itr++) {
 
-            auto opt_res = automaton.feed_char(*itr);
-
-            if (opt_res.has_value()) {
-                for (auto [pattern_idx, match_size] : opt_res.value()) {
-
-                    match.push_back(
-                        std::make_pair(
-                            pattern_idx,
-                            (size_t)(itr - text_begin - match_size + 1)
-                        )
-                    );
-                }
+            auto matches = automaton.feed_char(*itr);
+            while (matches.has_next()) {
+                auto [pattern_idx, match_size] = matches.next();
+                match.push_back(
+                    std::make_pair(
+                        pattern_idx,
+                        (size_t)(itr - text_begin - match_size + 1)
+                    )
+                );
             }
         }
-
         return match;
     }
 
