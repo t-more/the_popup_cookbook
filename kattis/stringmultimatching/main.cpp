@@ -36,7 +36,7 @@ int main() {
 
         getline(cin, text);
         auto res = popup::get_occurences(
-            text.begin(), text.end(), 
+            text.begin(), text.end(),
             patterns.begin(), patterns.end()
         );
 
