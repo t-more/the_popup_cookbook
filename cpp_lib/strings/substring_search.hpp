@@ -1,5 +1,3 @@
-#pragma once
-
 #include <vector>
 #include <iostream>
 #include <string>
@@ -76,7 +74,7 @@ namespace popup {
     using AsciiArr = AlphabetArr<128>;
 
     class LowercaseAscii {
-          std::array<int, 10> container_;
+          std::array<int, 26> container_;
     public:
         LowercaseAscii(){
             std::fill(container_.begin(), container_.end(), -1);
@@ -87,7 +85,7 @@ namespace popup {
         }
 
         int& operator[](const char c) {
-            return container_[(size_t)(c - 97)];
+            return container_[(size_t)(c - 'a')];
         }
     };
 
@@ -236,6 +234,12 @@ namespace popup {
 
         };
 
+
+        // Sets the interal couting state to the start, aka 0;
+        void reset() {
+            current_index = 0;
+        }
+
         MatchResults feed_char(Char c) {
             //current_index = transition((int)current_index, c);
             int next_state = current_index;
@@ -251,15 +255,16 @@ namespace popup {
         void add_string(ForwardItr begin, ForwardItr end, Assoc assoc) {
             int idx = 0;
 
+
             for (auto itr = begin; itr != end; itr++) {
                 auto& c = *itr;
                 if (automaton[idx].transition_[c] == -1) {
-
                     automaton[idx].transition_[c] = (int)automaton.size();
                     automaton.emplace_back();
                 }
                 idx = automaton[idx].transition_[c];
             }
+
             automaton[idx].assoc_ += assoc;
             automaton[idx].leaf_ = true;
         }
