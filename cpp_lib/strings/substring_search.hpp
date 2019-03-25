@@ -240,6 +240,15 @@ namespace popup {
             current_index = 0;
         }
 
+        std::pair<MatchResults, int> feed_char(int state, Char c) {
+            int next_state = state;
+            while (automaton[next_state].transition_[c] == -1) {
+                next_state = automaton[next_state].fail_link_;
+            }
+            next_state = automaton[next_state].transition_[c];
+            return {MatchResults(this, next_state), next_state};
+        }
+
         MatchResults feed_char(Char c) {
             //current_index = transition((int)current_index, c);
             int next_state = current_index;
@@ -250,6 +259,10 @@ namespace popup {
             return MatchResults(this, current_index);
         }
 
+
+        void add_string(const std::string& str, Assoc assoc) {
+            return add_string(str.cbegin(), str.cend(), assoc);
+        }
 
         template <typename ForwardItr>
         void add_string(ForwardItr begin, ForwardItr end, Assoc assoc) {

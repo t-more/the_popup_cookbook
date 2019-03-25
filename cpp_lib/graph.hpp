@@ -97,7 +97,7 @@ namespace popup {
 
         // Returns true if it is possible to reach a node from the source node
         bool reachable(size_t node) const {
-            return node < distances_.size() 
+            return node < distances_.size()
                 && distances_[node] != std::numeric_limits<T>::max();
         }
 
@@ -147,7 +147,7 @@ namespace popup {
 
         // Map keeping track of previous results of bellman ford runs.
         std::unordered_map<
-            size_t, 
+            size_t,
             std::shared_ptr<BellmanFordResult<T>>
         > bellman_ford_cache_;
 
@@ -203,7 +203,7 @@ namespace popup {
             return num_edges_;
         }
 
-        /** 
+        /**
          * This part specifies generic algorithms on graphs
          * BFS that runs f on every node it visits. f is given two arguments,
          * first is the node when found and second is the distance to the given
@@ -263,20 +263,20 @@ namespace popup {
         std::optional<std::pair<std::vector<size_t>, T>>
         dijkstra(size_t from, size_t to) const {
             const auto cmp = [](
-                const std::pair<size_t, T>& a, 
+                const std::pair<size_t, T>& a,
                 const std::pair<size_t, T>& b
             ) {
                 return a.second > b.second;
             };
             std::priority_queue<
-                std::pair<size_t, T>, 
-                std::vector<std::pair<size_t, T>>, 
+                std::pair<size_t, T>,
+                std::vector<std::pair<size_t, T>>,
                 decltype(cmp)
             > queue(cmp);
             std::vector<T> distances(num_nodes(), std::numeric_limits<T>::max());
             // size_t::max() is the value representing that a node never has been viewed
             std::vector<size_t> came_from(
-                num_nodes(), 
+                num_nodes(),
                 std::numeric_limits<size_t>::max()
             );
             std::vector<bool> visited(num_nodes(), 0);
@@ -416,14 +416,14 @@ namespace popup {
         std::vector<std::vector<T>> all_pairs_shortest_paths() {
 
             std::vector<std::vector<T>> result(
-                num_nodes(), 
+                num_nodes(),
                 std::vector<T>(num_nodes(), std::numeric_limits<T>::max())
             );
 
             // Assing initial edge costs
             for (auto& inner : list_) {
                 for (auto& edge : inner) {
-                    result[edge.from()][edge.to()] = 
+                    result[edge.from()][edge.to()] =
                         std::min(result[edge.from()][edge.to()], edge.weight());
                 }
             }
@@ -443,7 +443,7 @@ namespace popup {
                             && result[k][j] != std::numeric_limits<T>::max())
                         {
                             result[i][j] = std::min(
-                                result[i][j], 
+                                result[i][j],
                                 result[i][k] + result[k][j]
                             );
                         }
@@ -455,7 +455,7 @@ namespace popup {
 
         /**
          *  Kurskal's algorithm
-         *  Returns the minimum spanning tree and its cost if one is found, 
+         *  Returns the minimum spanning tree and its cost if one is found,
          *  else an empty result.
          */
         std::optional<std::pair<T,std::vector<Edge<T>>>> kruskal() {
