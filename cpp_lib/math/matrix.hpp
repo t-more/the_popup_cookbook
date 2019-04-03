@@ -7,7 +7,7 @@
     Author: Marcus Östling
 
     TODO:
-    Rename Matris -> Matrix (regex)
+    Rename Matrix -> Matrix (regex)
     Implement faster matrix multiplication algorithm
 */
 
@@ -16,51 +16,55 @@
 #include <cstdio>
 #include <type_traits>
 #include <math.h>
+#include <vector>
 
 template <class T>
-class Matris {
+class Matrix {
 private:
     size_t m_rows;
     size_t m_cols;
     size_t m_capacity;
     T * m_vec;
 
-    bool dimCheck(const Matris<T> &rhs) {
+    bool dimCheck(const Matrix<T> &rhs) {
         if(this->cols() != rhs.cols() || this->rows() != rhs.rows()) {
             throw std::invalid_argument("Must be the same dimension");
         }
         return true;
-    };
-protected:
+    }
+
 public:
     static_assert(std::is_move_constructible<T>::value, "Type must be moveConstructible");
     static_assert(std::is_move_assignable<T>::value, "Type must be moveAssignable");
     
     // Constructors
-    Matris() : Matris(0) {};
-    explicit Matris(const int n) : m_rows(n), m_cols(n), m_capacity(n*n), m_vec(nullptr) {
+    Matrix() : Matrix(0) {};
+    explicit Matrix(const int n) : m_rows(n), m_cols(n), m_capacity(n*n), m_vec(nullptr) {
         if(n != 0) {
             m_vec = new T[n*n];
             for (int i = 0; i < n*n; ++i) {
                 m_vec[i] = T();
             }
         }
-    };
-    Matris(const Matris &copy) : m_rows(copy.m_rows), m_cols(copy.m_cols), 
+    }
+
+    Matrix(const Matrix &copy) : m_rows(copy.m_rows), m_cols(copy.m_cols), 
                                  m_capacity(copy.m_capacity) {
         m_vec = new T[m_capacity];
         for (size_t i = 0; i < copy.m_capacity; ++i){
             m_vec[i] = copy.m_vec[i];
         }
     }
-    Matris(Matris &&other) : m_rows(other.m_rows), m_cols(other.m_cols), 
+
+    Matrix(Matrix &&other) : m_rows(other.m_rows), m_cols(other.m_cols), 
                              m_capacity(other.m_capacity), m_vec(other.m_vec) {
         other.m_rows = 0;
         other.m_cols = 0;
         other.m_capacity = 0;
         other.m_vec = nullptr;
-    };
-    Matris(std::initializer_list<T> init_list) {
+    }
+
+    Matrix(std::initializer_list<T> init_list) {
         size_t sroot = std::sqrt(init_list.size());
         if(sroot*sroot != init_list.size())
             throw std::out_of_range("Size of the init_list must be an even square root.");
@@ -75,8 +79,9 @@ public:
             this->m_vec[count] = *it;
             count++;
         }
-    };
-    virtual ~Matris() {
+    }
+
+    virtual ~Matrix() {
         delete[] this->m_vec;
     }
 
@@ -97,19 +102,21 @@ public:
         if(row < this->rows() && col < this->cols())
             return m_vec[row*this->cols() + col];
         throw std::out_of_range("Element out of range");
-    };
+    }
+
     const T& operator()(const size_t row, const size_t col) const {
         if(row < this->rows() && col < this->cols())
             return m_vec[row*this->cols() + col];
         throw std::out_of_range("Element out of range");
-    };
+    }
 
-    bool operator!=(Matris<T> &other) {
+    bool operator!=(Matrix<T> &other) {
         if(*this == other)
             return false;
         return true;
-    };
-    bool operator==(Matris<T> &other) {
+    }
+
+    bool operator==(Matrix<T> &other) {
         if(this->cols() == other.cols() &&
            this->rows() == other.rows() &&
            this->m_capacity == other.m_capacity) {
@@ -120,9 +127,9 @@ public:
             return true;
         }
         return false;
-    };
+    }
     
-    void operator=(Matris<T> &&rhs) {
+    void operator=(Matrix<T> &&rhs) {
         if(*this != rhs) {
             delete[] this->m_vec;
             this->m_rows = rhs.m_rows;
@@ -134,8 +141,9 @@ public:
             rhs.m_capacity = 0;
             rhs.m_vec = new T[0];
         }
-    };
-    void operator=(Matris<T> &rhs) {
+    }
+    
+    void operator=(Matrix<T> &rhs) {
         if(*this != rhs) {
             delete[] this->m_vec;
             this->m_rows = rhs.m_rows;
@@ -147,41 +155,45 @@ public:
             }
             
         }
-    };
+    }
 
     void operator+=(const T &rhs) {
         for (size_t i = 0; i < this->m_capacity; ++i) {
             m_vec[i] += rhs;
         }
-    };
+    }
+
     void operator-=(const T &rhs) {
         for (size_t i = 0; i < m_capacity; ++i) {
             m_vec[i] -= rhs;
         }
-    };
+    }
+
     void operator*=(const T &rhs) {
         for (size_t i = 0; i < m_capacity; ++i) {
             m_vec[i] *= rhs;
         }
-    };
+    }
 
-    void operator+=(const Matris<T> &rhs) {
+    void operator+=(const Matrix<T> &rhs) {
         this->dimCheck(rhs);
         for (size_t i = 0; i < this->m_capacity; ++i){
             this->m_vec[i] += rhs.m_vec[i];
         }
-    };
-    void operator-=(const Matris<T> &rhs) {
+    }
+
+    void operator-=(const Matrix<T> &rhs) {
         dimCheck(rhs);
         for (size_t i = 0; i < m_capacity; ++i){
             m_vec[i] -= rhs.m_vec[i];
         }
-    };
-    void operator*=(const Matris<T> &rhs) {
-        if(this->cols() != rhs.rows())
+    }
+
+    void operator*=(const Matrix<T> &rhs) {
+        if (this->cols() != rhs.rows())
             throw std::invalid_argument("This cols must equal thats rows.");
-        
-        Matris<T> tmp(*this);
+
+        Matrix<T> tmp(*this);
         this->m_cols = rhs.cols();
         for (size_t i = 0; i < this->rows(); ++i) {
             for (size_t j = 0;j < this->cols(); ++j) {
@@ -192,26 +204,69 @@ public:
                 (*this)(i,j) = tmp_sum;
             }
         }
-        
-    };
+    }
 
-    friend Matris<T> operator+(const Matris<T> &lhs, const Matris<T> &rhs) {
-        Matris<T> m(lhs);
+    Matrix<T> pow(size_t n) {
+        Matrix<T> res(*this);
+        Matrix<T> cur(*this);
+        int prev = 0;
+
+        // Find first bit
+        for (int i = 0; 1<<i <= n; i++) {
+            if (n&(1<<i)) {
+                prev = i;
+                for (int m = 0; m < i; m++) {
+                    cur *= Matrix<T>(cur);
+                }
+                break;
+            }
+        }
+        res = Matrix(cur);
+
+        for (int i = prev+1; (1<<i) < n; i++) {
+            if (n&(1<<i)) {
+                for(int m = 0; m < i - prev; m++) {
+                    cur *= Matrix<T>(cur);
+                }
+                prev = i;
+                res *= cur;
+            }
+        }
+
+        return res;
+    }
+
+    friend Matrix<T> operator+(const Matrix<T> &lhs, const Matrix<T> &rhs) {
+        Matrix<T> m(lhs);
         m += rhs;
         return m;
-    };
-    friend Matris<T> operator-(const Matris<T> &lhs, const Matris<T> &rhs) {
-        Matris<T> m(lhs);
+    }
+
+    friend Matrix<T> operator-(const Matrix<T> &lhs, const Matrix<T> &rhs) {
+        Matrix<T> m(lhs);
         m -= rhs;
         return m;
     }
-    friend Matris<T> operator*(const Matris<T> &lhs, const Matris<T> &rhs) {
-        Matris<T> m(lhs);
+
+    friend Matrix<T> operator*(const Matrix<T> &lhs, const Matrix<T> &rhs) {
+        Matrix<T> m(lhs);
         m *= rhs;
         return m;
-    };
-    
-    friend std::ostream& operator<<(std::ostream& os, const Matris<T> &m) {
+    }
+
+    friend std::vector<T> operator*(const Matrix<T> &lhs, const std::vector<T> &rhs) {
+        std::vector<T> tmp(rhs.size());
+        for (size_t r = 0; r < lhs.m_rows; r++) {
+            T sum = T(0);
+            for(size_t c = 0; c < lhs.m_cols; c++) {
+                sum += lhs(r, c) * rhs[c];
+            }
+            tmp[r] = sum;
+        }
+        return tmp;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Matrix<T> &m) {
         os << m.rows() << " " << m.cols() << std::endl;
         for (unsigned int i = 0; i < m.rows(); ++i) {
             for (unsigned int j = 0; j < m.cols(); ++j) {
@@ -221,8 +276,9 @@ public:
                 os << std::endl;
         }
         return os;
-    }; 
-    friend std::istream& operator>>(std::istream& is, Matris<T> &m) {
+    } 
+
+    friend std::istream& operator>>(std::istream& is, Matrix<T> &m) {
         is >> m.m_rows >> m.m_cols;
         m.m_capacity = m.cols() * m.rows();
         delete[] m.m_vec;
@@ -231,21 +287,21 @@ public:
             is >> *it;
         }
         return is;
-    }; 
+    } 
 
-    // Methods
     void reset() {
         for (auto it = (*this).begin(); it != (*this).end(); it++) {
             *it = T();
         }
-    };
-    Matris<T> identity(const unsigned int dim) const {
-        Matris<T> tmp(dim);
+    }
+
+    Matrix<T> identity(const unsigned int dim) const {
+        Matrix<T> tmp(dim);
         for (size_t i = 0; i < tmp.cols(); ++i) {
             tmp(i,i) = 1;
         }
         return tmp;
-    };
+    }
     
     void insert_row(const unsigned int before_row) {
         if (0 > before_row || before_row > this->rows()-1 || this->rows() == 0)
@@ -268,6 +324,7 @@ public:
         this->m_vec = new_vec;
         this->m_rows++;
     }
+
     void append_row(const unsigned int after_row) {
         if (0 > after_row || after_row > this->rows()-1 || this->rows() == 0)
             throw std::out_of_range("Row out of range");
@@ -288,7 +345,8 @@ public:
         this->m_capacity = new_cap;
         this->m_vec = new_vec;
         this->m_rows++;
-    };
+    }
+
     void remove_row(const unsigned int row) {
         if (0 > row || row > this->rows()-1 || this->rows() == 0)
             throw std::out_of_range("Row out of range");
@@ -305,7 +363,7 @@ public:
         this->m_capacity = new_cap;
         this->m_vec = new_vec;
         this->m_rows--;
-    };
+    }
 
     void insert_column(const unsigned int before_col) {
         if (0 > before_col || before_col > this->cols()-1 || this->cols() == 0)
@@ -326,7 +384,8 @@ public:
         this->m_capacity = new_cap;
         this->m_vec = new_vec;
         this->m_cols++;
-    };
+    }
+
     void append_column(const unsigned int after_col) {
         if (0 > after_col || after_col > this->cols()-1 || this->cols()==0)
             throw std::out_of_range("Column out of range");
@@ -346,7 +405,8 @@ public:
         this->m_capacity = new_cap;
         this->m_vec = new_vec;
         this->m_cols++;
-    };
+    }
+
     void remove_column(const unsigned int col) {
         if (0 > col || col > this->cols()-1 || this->cols() == 0)
             throw std::out_of_range("Column out of range");
@@ -364,10 +424,10 @@ public:
         this->m_capacity = new_cap;
         this->m_vec = new_vec;
         this->m_cols--;
-    };
+    }
     
-    Matris& transpose() {
-        Matris<T> tmp(*this);
+    Matrix& transpose() {
+        Matrix<T> tmp(*this);
         size_t old_cols = this->cols();
         this->m_cols = this->m_rows;
         this->m_rows = old_cols;
@@ -377,10 +437,10 @@ public:
             }
         }
         return *this;
-    };
+    }
 
-    void swap(Matris<T> &m1, Matris <T> &m2) {
-        Matris<T> tmp(std::move(m1));
+    void swap(Matrix<T> &m1, Matrix <T> &m2) {
+        Matrix<T> tmp(std::move(m1));
         m1 = std::move(m2);
         m2 = std::move(tmp);
     }
