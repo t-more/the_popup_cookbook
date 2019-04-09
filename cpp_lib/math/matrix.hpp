@@ -206,6 +206,23 @@ public:
         }
     }
 
+    void mul_mod(const Matrix<T> &rhs, T moduli) {
+        if (this->cols() != rhs.rows())
+            throw std::invalid_argument("This cols must equal thats rows.");
+
+        Matrix<T> tmp(*this);
+        this->m_cols = rhs.cols();
+        for (size_t i = 0; i < this->rows(); ++i) {
+            for (size_t j = 0;j < this->cols(); ++j) {
+                T tmp_sum = 0;
+                for (size_t k = 0; k < rhs.rows(); ++k) {
+                    tmp_sum += tmp(i,k)*rhs(k,j) % moduli;   
+                }
+                (*this)(i,j) = tmp_sum % moduli;
+            }
+        }
+    }
+
     Matrix<T> pow(size_t n) {
         Matrix<T> res(*this);
         Matrix<T> cur(*this);
@@ -236,6 +253,43 @@ public:
         return res;
     }
 
+    Matrix<T> pow_modulus(size_t n, T moduli) {
+        Matrix<T> res(*this);
+        Matrix<T> cur(*this);
+        int prev = 0;
+
+        // Find first bit
+        for (int i = 0; 1<<i <= n; i++) {
+            if (n&(1<<i)) {
+                prev = i;
+                for (int m = 0; m < i; m++) {
+                    cur.mul_mod(Matrix<T>(cur), moduli);
+                }
+                break;
+            }
+        }
+        res = Matrix(cur);
+
+        for (int i = prev+1; (1<<i) < n; i++) {
+            if (n&(1<<i)) {
+                for(int m = 0; m < i - prev; m++) {
+                    cur.mul_mod(Matrix<T>(cur), moduli);
+                }
+                prev = i;
+                res.mul_mod(cur, moduli);
+            }
+        }
+
+        return res;
+    }
+
+    Matrix<T>& modulus(T moduli) {
+        for(auto &i : *this) {
+            i = (i % moduli + moduli) % moduli;
+        }
+        return (*this);
+    }
+
     friend Matrix<T> operator+(const Matrix<T> &lhs, const Matrix<T> &rhs) {
         Matrix<T> m(lhs);
         m += rhs;
@@ -260,6 +314,20 @@ public:
             T sum = T(0);
             for(size_t c = 0; c < lhs.m_cols; c++) {
                 sum += lhs(r, c) * rhs[c];
+            }
+            tmp[r] = sum;
+        }
+        return tmp;
+    }
+
+    friend std::vector<T> mul_mod(const Matrix<T> &lhs, const std::vector<T> &rhs,
+            T moduli) {
+        std::vector<T> tmp(rhs.size());
+        for (size_t r = 0; r < lhs.m_rows; r++) {
+            T sum = T(0);
+            for(size_t c = 0; c < lhs.m_cols; c++) {
+                sum += ((lhs(r, c) % moduli) * (rhs[c] % moduli)) % moduli;
+                sum %= moduli;
             }
             tmp[r] = sum;
         }
