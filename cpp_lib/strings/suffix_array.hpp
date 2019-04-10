@@ -1,3 +1,4 @@
+// Authors: Marcus Östling, Tomas Möre 2019
 #include <iostream>
 #include <vector>
 #include <string>
@@ -7,9 +8,12 @@
 #define ALPHABET_SIZE 256
 namespace popup {
 
+    /**
+     * Cycle array will keep an sorted array of the cycles that can be created
+     * from the input string. Complexity O(n * log n)
+     */
     class CycleArray {
         std::vector<size_t> arr_;
-
     public:
         CycleArray(const std::string& str) {
             arr_ = std::vector<size_t>(str.size());
@@ -18,6 +22,8 @@ namespace popup {
                 classes(str.size()),
                 count(std::max(ALPHABET_SIZE, (int)str.size()), 0);
 
+            // First we run a counting sort on each element individualy, this is
+            // mosly a startup run.
             for (size_t i = 0; i < str.size(); i++) {
                 count[str[i]]++;
             }
@@ -28,7 +34,7 @@ namespace popup {
                 size_t next_count = --count[str[i]];
                 position[next_count] = i;
             }
-            count[position[0]] = 0;
+
             size_t num_classes = 1;
             for (size_t i = 1; i < str.size(); i++) {
                 if (str[position[i]] != str[position[i-1]]) {
@@ -41,14 +47,17 @@ namespace popup {
                 position_next(str.size()),
                 classes_next(str.size());
 
+            for (size_t high = 0; ((size_t)1 << high)  < str.size(); high++) {
 
-            for (size_t high = 0; (1 << high)  < str.size(); high++) {
+                // Shifts the start of each string to sort
                 for (size_t i = 0;  i < str.size(); i++) {
-                    position_next[i] = position[i] - (1 << high);
-                    if (position_next[i] >= std::numeric_limits<size_t>::max() - 10 * str.size()) {
+                    position_next[i] = position[i] - ((size_t)1 << high);
+                    if (position_next[i] >= std::numeric_limits<size_t>::max() - str.size()) {
                         position_next[i] += str.size();
                     }
                 }
+
+                // Perform the counting sort
                 std::fill(count.begin(), count.begin() + num_classes, 0);
                 for (size_t i = 0; i < str.size(); i++) {
                     count[classes[position_next[i]]] += 1;
@@ -63,6 +72,7 @@ namespace popup {
                 }
                 classes_next[position[0]] = 0;
 
+                // Updates classes for next iteration
                 num_classes = 1;
                 for (size_t i = 1; i < str.size(); i++) {
                     std::pair<size_t, size_t> current_elem = {classes[position[i]],
@@ -96,6 +106,12 @@ namespace popup {
         }
     };
 
+    /**
+     * Version of cycle array that sorts according to the order of the
+     * prefixes.
+     *
+     * O( n * log n)
+     */
     class SuffixArray {
         std::vector<size_t> arr_;
         std::string string_;

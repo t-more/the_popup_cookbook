@@ -1,3 +1,5 @@
+// Authors: Tomas Möre, Marcus Östling 2019
+
 #include <vector>
 #include <iostream>
 #include <string>
@@ -24,34 +26,7 @@ namespace popup {
 
 
     template<unsigned int S>
-    class AlphabetArr
-    {
-
-        // this was a halfed arsed attempt to make an interator that became too boring
-        // left in case we want to finnish it
-
-        // class alphabetarrmapiter  : public std::iterator<std::random_access_iterator_tag,
-        //                                      std::pair<char, int>,
-        //                                      ptrdiff_t,
-        //                                      std::pair<char, int>*,
-        //                                      std::pair<char, int>&> {
-        //     const std::array<int, s>& iter_;
-        //     size_t offset_;
-        //     alphabetarrmapiter(const std::array<int, s>& arr, size_t offset) {
-        //         iter_ = arr;
-        //         offset_ = offset;
-        //     }
-
-        //     alphabetarrmapiter operator++() {
-        //         size_t prev_idx = offset_++;
-
-        //         return alphabetarrmapiter(iter_, offset_);
-        //     }
-
-        // }
-
-        // this is appently not a proper iterator... but i do not care, shitty ugly c++.
-
+    class AlphabetArr {
         std::array<int, S> container_;
     public:
         AlphabetArr(){
@@ -74,7 +49,7 @@ namespace popup {
     using AsciiArr = AlphabetArr<128>;
 
     class LowercaseAscii {
-          std::array<int, 26> container_;
+        std::array<int, 26> container_;
     public:
         LowercaseAscii(){
             std::fill(container_.begin(), container_.end(), -1);
@@ -88,17 +63,18 @@ namespace popup {
             return container_[(size_t)(c - 'a')];
         }
     };
+    /**
+    * the automaton will work using the alphabet container to keep track of
+    * various insertions. morespecifically the [] operator i expected to be
+    * properly implemented for this. each character shall be mapped to an index
+    * as specified by the automaton. a simple example of this is tue asciiarr
+    * defined above. also note that there must be a function that retrieves the
+    * alphabet o
 
-    // the automaton will work using the alphabet container to keep track of
-    // various insertions. morespecifically the [] operator i expected to be
-    // properly implemented for this. each character shall be mapped to an index
-    // as specified by the automaton. a simple example of this is tue asciiarr
-    // defined above. also note that there must be a function that retrieves the
-    // alphabet o
-
-    //secondly each matching string in the language will be
-    // associated with some value. it is expected that this elemnts froms a
-    // 'modified' monoid under '+=' and construction.
+    * secondly each matching string in the language will be
+    * associated with some value. it is expected that this elemnts froms a
+    * 'modified' monoid under '+=' and construction.
+    */
     template <typename Char, typename AlphabetContainer, typename Assoc>
     class AhoCorasickAutomaton {
         friend class machresults;
@@ -112,80 +88,18 @@ namespace popup {
             AlphabetContainer transition_;
             vertex() {};
         };
-    protected:
-        std::vector<vertex> automaton = std::vector<vertex>(1);
-        int current_index = 0;
 
     public:
-
-        size_t automaton_size() const {
-            return automaton.size();
-        }
-
-        void build_automaton() {
-            const auto alphabet = AlphabetContainer::alphabet();
-            for (auto c = alphabet.cbegin(); c != alphabet.cend(); c++) {
-                auto& next = automaton[0].transition_[c];
-                if (next == -1) {
-                    next = 0;
-                }
-            }
-            std::queue<size_t> q;
-
-            for (auto c = alphabet.cbegin(); c != alphabet.cend(); c++) {
-                auto& next = automaton[0].transition_[c];
-                if (next != 0) {
-                    automaton[next].fail_link_ = 0;
-                    q.push(next);
-                }
-            }
-
-            while (!q.empty()) {
-                auto state = q.front();
-                q.pop();
-                for (auto c = alphabet.cbegin(); c != alphabet.cend(); c++) {
-                    auto& next = automaton[state].transition_[c];
-                    if (next != -1) {
-                        auto fail = automaton[state].fail_link_;
-                        while (automaton[fail].transition_[c] == -1) {
-                            fail = automaton[fail].fail_link_;
-                        }
-                        fail = automaton[fail].transition_[c];
-                        automaton[next].fail_link_ = fail;
-                        q.push(next);
-                    }
-                }
-            }
-        }
-
-        int get_exit(int idx) {
-            if(automaton[idx].exit_link_ == -1) {
-                int i = automaton[idx].fail_link_;
-                while(i > 0) {
-                    if(automaton[i].leaf_) {
-                        automaton[idx].exit_link_ = i;
-                        break;
-                    } else if(automaton[i].exit_link_ != -1) {
-                        automaton[idx].exit_link_ = automaton[i].exit_link_;
-                        break;
-                    } else {
-                        i = automaton[i].fail_link_;
-                    }
-                }
-                if (automaton[idx].exit_link_ == -1) {
-                    automaton[idx].exit_link_ = -2;
-                }
-            }
-            return automaton[idx].exit_link_;
-        }
-
-
-
+        /**
+         * Match results provides a non-ideomatic iterator to the results of a
+         * particular matching. The automata that provided the match must not be
+         * deleted when this is run as it keeps an internal reference.
+         */
         class MatchResults {
             AhoCorasickAutomaton* automaton_;
             int leaf_idx_;
             int exit_idx_;
-            std::unordered_set<int> matched_ ;
+            std::unordered_set<int> matched_;
 
             int next_idx_ = 0;
         public:
@@ -193,12 +107,8 @@ namespace popup {
             MatchResults(AhoCorasickAutomaton* automaton, int index) {
                 automaton_ = automaton;
                 leaf_idx_ = index;
-
                 exit_idx_ = automaton_->get_exit(index);
-                //                matched_ = std::vector<bool>(automaton->automaton_size(), false);
             }
-
-
 
             bool has_next() {
                 if (leaf_idx_ > 0 && automaton_->automaton[leaf_idx_].leaf_) {
@@ -227,20 +137,99 @@ namespace popup {
                 return false;
             }
 
-            Assoc& next() {
+            Assoc& next() const {
                 return automaton_->automaton[next_idx_].assoc_;
             }
 
 
         };
 
+    protected:
+        std::vector<vertex> automaton = std::vector<vertex>(1);
+        int current_index = 0;
+
+    public:
+
+        size_t automaton_size() const {
+            return automaton.size();
+        }
+
+        /**
+         *  Builds the automaton given the strings allready added, warning,
+         *  should not be called more then once.
+         */
+        void build_automaton() {
+            const auto alphabet = AlphabetContainer::alphabet();
+            std::queue<size_t> q;
+
+            // Adds self loops to the root node for characters that aren't used.
+            for (auto c = alphabet.cbegin(); c != alphabet.cend(); c++) {
+                auto& next = automaton[0].transition_[c];
+                if (next == -1) {
+                    next = 0;
+                } else {
+                    automaton[next].fail_link_ = 0;
+                    q.push(next);
+                }
+            }
+
+            // Performs a bfs from the root node, initalizing the fail links
+            while (!q.empty()) {
+                auto state = q.front();
+                q.pop();
+                for (auto c = alphabet.cbegin(); c != alphabet.cend(); c++) {
+                    auto& next = automaton[state].transition_[c];
+                    if (next != -1) {
+                        auto fail = automaton[state].fail_link_;
+                        while (automaton[fail].transition_[c] == -1) {
+                            fail = automaton[fail].fail_link_;
+                        }
+                        fail = automaton[fail].transition_[c];
+                        automaton[next].fail_link_ = fail;
+                        q.push(next);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Retrieves the exit link, that is a link to something that will match
+         * some part of the prefix from a given node.
+         *
+         * Every node does not need to * have an exit link. In this case it will
+         * have a value of -2.
+         */
+        int get_exit(int idx) {
+            if (automaton[idx].exit_link_ == -1) {
+                int i = automaton[idx].fail_link_;
+                while (i > 0) {
+                    if (automaton[i].leaf_) {
+                        automaton[idx].exit_link_ = i;
+                        break;
+                    } else if (automaton[i].exit_link_ != -1) {
+                        automaton[idx].exit_link_ = automaton[i].exit_link_;
+                        break;
+                    } else {
+                        i = automaton[i].fail_link_;
+                    }
+                }
+                if (automaton[idx].exit_link_ == -1) {
+                    automaton[idx].exit_link_ = -2;
+                }
+            }
+            return automaton[idx].exit_link_;
+        }
 
         // Sets the interal couting state to the start, aka 0;
         void reset() {
             current_index = 0;
         }
 
-        std::pair<MatchResults, int> feed_char(int state, Char c) {
+        /**
+         *  Manually feeds a character into the automata from a specified
+         *  state. Returns the next state and the match results.
+         */
+        std::pair<MatchResults, int> feed_char(int state, Char c) const {
             int next_state = state;
             while (automaton[next_state].transition_[c] == -1) {
                 next_state = automaton[next_state].fail_link_;
@@ -259,7 +248,6 @@ namespace popup {
             return MatchResults(this, current_index);
         }
 
-
         void add_string(const std::string& str, Assoc assoc) {
             return add_string(str.cbegin(), str.cend(), assoc);
         }
@@ -267,7 +255,6 @@ namespace popup {
         template <typename ForwardItr>
         void add_string(ForwardItr begin, ForwardItr end, Assoc assoc) {
             int idx = 0;
-
 
             for (auto itr = begin; itr != end; itr++) {
                 auto& c = *itr;
@@ -281,14 +268,15 @@ namespace popup {
             automaton[idx].assoc_ += assoc;
             automaton[idx].leaf_ = true;
         }
-
     };
 
+    /**
+     * Utility class to keep data about where a particular match is found
+     */
     class StringMatchInfo {
     public:
         size_t start;
         size_t length;
-
 
         StringMatchInfo(size_t start, size_t length) : start(start), length(length) {}
         StringMatchInfo() : StringMatchInfo(0,0) {}
@@ -303,6 +291,7 @@ namespace popup {
             return (start < other.start) || (start == other.start && length < other.length);
         }
     };
+
     /**
      *  Returns a list of pairs with the index of the pattern and
      *  the occurence index in the text.
@@ -327,7 +316,6 @@ namespace popup {
                     str.size()
                 )
             );
-
         }
         automaton.build_automaton();
 
