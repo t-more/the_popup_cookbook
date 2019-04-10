@@ -17,7 +17,7 @@
 #include <type_traits>
 #include <math.h>
 #include <vector>
-
+#include <cassert>
 template <class T>
 class Matrix {
 private:
@@ -36,7 +36,7 @@ private:
 public:
     static_assert(std::is_move_constructible<T>::value, "Type must be moveConstructible");
     static_assert(std::is_move_assignable<T>::value, "Type must be moveAssignable");
-    
+
     // Constructors
     Matrix() : Matrix(0) {};
     explicit Matrix(const int n) : m_rows(n), m_cols(n), m_capacity(n*n), m_vec(nullptr) {
@@ -48,7 +48,7 @@ public:
         }
     }
 
-    Matrix(const Matrix &copy) : m_rows(copy.m_rows), m_cols(copy.m_cols), 
+    Matrix(const Matrix &copy) : m_rows(copy.m_rows), m_cols(copy.m_cols),
                                  m_capacity(copy.m_capacity) {
         m_vec = new T[m_capacity];
         for (size_t i = 0; i < copy.m_capacity; ++i){
@@ -56,7 +56,7 @@ public:
         }
     }
 
-    Matrix(Matrix &&other) : m_rows(other.m_rows), m_cols(other.m_cols), 
+    Matrix(Matrix &&other) : m_rows(other.m_rows), m_cols(other.m_cols),
                              m_capacity(other.m_capacity), m_vec(other.m_vec) {
         other.m_rows = 0;
         other.m_cols = 0;
@@ -68,7 +68,7 @@ public:
         size_t sroot = std::sqrt(init_list.size());
         if(sroot*sroot != init_list.size())
             throw std::out_of_range("Size of the init_list must be an even square root.");
-        
+
         m_rows = sroot;
         m_cols = sroot;
         m_capacity = sroot*sroot;
@@ -96,7 +96,7 @@ public:
     // Accessors
     size_t cols() const {return this->m_cols; };
     size_t rows() const {return this->m_rows; };
-    
+
     // Operators
     T& operator()(const size_t row, const size_t col) {
         if(row < this->rows() && col < this->cols())
@@ -128,7 +128,7 @@ public:
         }
         return false;
     }
-    
+
     void operator=(Matrix<T> &&rhs) {
         if(*this != rhs) {
             delete[] this->m_vec;
@@ -142,7 +142,7 @@ public:
             rhs.m_vec = new T[0];
         }
     }
-    
+
     void operator=(Matrix<T> &rhs) {
         if(*this != rhs) {
             delete[] this->m_vec;
@@ -153,7 +153,7 @@ public:
             for (size_t i = 0; i < this->m_capacity; ++i) {
                 this->m_vec[i] = rhs.m_vec[i];
             }
-            
+
         }
     }
 
@@ -199,7 +199,7 @@ public:
             for (size_t j = 0;j < this->cols(); ++j) {
                 T tmp_sum = 0;
                 for (size_t k = 0; k < rhs.rows(); ++k) {
-                    tmp_sum += tmp(i,k)*rhs(k,j);   
+                    tmp_sum += tmp(i,k)*rhs(k,j);
                 }
                 (*this)(i,j) = tmp_sum;
             }
@@ -216,7 +216,7 @@ public:
             for (size_t j = 0;j < this->cols(); ++j) {
                 T tmp_sum = 0;
                 for (size_t k = 0; k < rhs.rows(); ++k) {
-                    tmp_sum += tmp(i,k)*rhs(k,j) % moduli;   
+                    tmp_sum += tmp(i,k)*rhs(k,j) % moduli;
                 }
                 (*this)(i,j) = tmp_sum % moduli;
             }
@@ -254,9 +254,19 @@ public:
     }
 
     Matrix<T> pow_modulus(size_t n, T moduli) {
+        assert(n > 0);
+        if (n == 1) {
+            return Matrix<T>(*this);
+        } else if (n == 2) {
+            Matrix<T> res(*this);
+            res *= *this;
+            return res;
+        }
+
         Matrix<T> res(*this);
         Matrix<T> cur(*this);
         int prev = 0;
+
 
         // Find first bit
         for (int i = 0; 1<<i <= n; i++) {
@@ -320,8 +330,11 @@ public:
         return tmp;
     }
 
-    friend std::vector<T> mul_mod(const Matrix<T> &lhs, const std::vector<T> &rhs,
-            T moduli) {
+    friend std::vector<T> mul_mod(
+        const Matrix<T> &lhs,
+        const std::vector<T> &rhs,
+            T moduli
+    ) {
         std::vector<T> tmp(rhs.size());
         for (size_t r = 0; r < lhs.m_rows; r++) {
             T sum = T(0);
@@ -344,7 +357,7 @@ public:
                 os << std::endl;
         }
         return os;
-    } 
+    }
 
     friend std::istream& operator>>(std::istream& is, Matrix<T> &m) {
         is >> m.m_rows >> m.m_cols;
@@ -355,7 +368,7 @@ public:
             is >> *it;
         }
         return is;
-    } 
+    }
 
     void reset() {
         for (auto it = (*this).begin(); it != (*this).end(); it++) {
@@ -370,7 +383,7 @@ public:
         }
         return tmp;
     }
-    
+
     void insert_row(const unsigned int before_row) {
         if (0 > before_row || before_row > this->rows()-1 || this->rows() == 0)
             throw std::out_of_range("Row out of range");
@@ -493,7 +506,7 @@ public:
         this->m_vec = new_vec;
         this->m_cols--;
     }
-    
+
     Matrix& transpose() {
         Matrix<T> tmp(*this);
         size_t old_cols = this->cols();
@@ -512,7 +525,7 @@ public:
         m1 = std::move(m2);
         m2 = std::move(tmp);
     }
-    
+
 };
 
 #endif
