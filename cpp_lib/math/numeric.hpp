@@ -1,9 +1,13 @@
+// Author: Tomas Möre, Marcus Östling 2019
 #pragma once
 #include <iostream>
 #include <cmath>
 #include <vector>
 #include <cstdint>
 
+/**
+ *  Sieve of Eratosthenes
+ */
 class SieveCache {
     std::vector<bool> is_prime_;
     uint64_t max_number_;
@@ -22,8 +26,6 @@ public:
                 primes_found_ += 1;
                 for (uint64_t n = 3 * number ; n < max_number; n = n + 2 * number) {
                     size_t n_idx = (n - 1)/2;
-                    //std::cerr << "Not prime: " << n << " idx: " << n_idx << std::endl;
-
                     is_prime_[n_idx] = false;
                 }
             }

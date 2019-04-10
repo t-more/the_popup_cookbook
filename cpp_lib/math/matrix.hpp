@@ -5,9 +5,9 @@
     Matrix class
 
     Author: Marcus Östling
+        enchanted by Tomas Möre,using his magical fingers.
 
     TODO:
-    Rename Matrix -> Matrix (regex)
     Implement faster matrix multiplication algorithm
 */
 
@@ -17,7 +17,7 @@
 #include <type_traits>
 #include <math.h>
 #include <vector>
-#include <cassert>
+
 template <class T>
 class Matrix {
 private:
@@ -254,6 +254,12 @@ public:
         return res;
     }
 
+    /**
+     *  This matrix powered to n, with its element modulo moduli.
+     *  O(m^3 * log n), where m is the dimension of this matrix.
+     *  
+     *  Iterates over the bits of n and 
+     */
     Matrix<T> pow_modulus(size_t n, T moduli) {
         assert(n > 0);
         if (n == 1) {
@@ -264,24 +270,10 @@ public:
             return res;
         }
 
-        Matrix<T> res(*this);
+        Matrix<T> res(this->identity(this->m_rows));
         Matrix<T> cur(*this);
         size_t prev = 0;
-
-
-        // Find first bit
-        for (size_t i = 0; ((size_t)1 << i) <= n; i++) {
-            if (n&(1<<i)) {
-                prev = i;
-                for (size_t m = 0; m < i; m++) {
-                    cur.mul_mod(Matrix<T>(cur), moduli);
-                }
-                break;
-            }
-        }
-        res = Matrix(cur);
-
-        for (size_t i = prev+1; ((size_t)1 << (size_t)i) < n; i++) {
+        for (size_t i = 0; ((size_t)1 << (size_t)i) <= n; i++) {
             if (n & ((size_t)1<<i)) {
                 for(size_t m = 0; m < i - prev; m++) {
                     cur.mul_mod(Matrix<T>(cur), moduli);
@@ -290,7 +282,6 @@ public:
                 res.mul_mod(cur, moduli);
             }
         }
-
         return res;
     }
 

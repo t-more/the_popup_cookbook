@@ -1,3 +1,4 @@
+// Author: Marcus Östling, Tomas Möre 2019
 #pragma once
 #include "matrix.hpp"
 #include <vector>
@@ -6,6 +7,16 @@
 
 namespace popup {
 
+/**
+ *  Calculate the k'th linear recurrences given
+ *  the N+1 first coefficients and N first
+ *  values.
+ *
+ *  Complexity: (O(N^3 log(k)))
+ *
+ *  Inspired by:
+ *  http://fusharblog.com/solving-linear-recurrence-for-programming-contest/
+ */
 class LinearRecurrence {
     Matrix<int64_t> init_matrix_;
     Matrix<int64_t> matrix_;
@@ -14,6 +25,10 @@ class LinearRecurrence {
     size_t degree_;
     size_t steps_ = 0;
 
+    /**
+     * Setup the matrix and inital values for
+     * the linear recurrences.
+     */
     void construct_init_matrix() {
         matrix_ = Matrix<int64_t>((int)(this->degree_+1));
 
@@ -44,34 +59,21 @@ public:
         this->degree_ = degree;
         this->coefficient_ = coefficient;
         this->init_values_ = std::vector<int64_t>(init_values);
-        //std::reverse(this->init_values_.begin(), this->init_values_.end());
 
         construct_init_matrix();
     }
 
-    void step(size_t n) {
-    }
-
+    /**
+     *  Calculates the n'th term in the linear recurrence modulo moduli
+     */
     int64_t get(size_t n, int64_t moduli) {
-
         size_t exponent = (degree_ >= n) ? 1 : n - degree_ + 1;
-
-
-        //this->matrix_.modulus(moduli);
         Matrix<int64_t> tmp = this->matrix_.pow_modulus(exponent, moduli);
-        // for (auto i : init_values_) {
-        //     std::cout << i << " ";
-        // }
-        // std::cout << std::endl;
         std::vector<int64_t> iv_tmp(init_values_);
         for (auto &i : iv_tmp) {
             i = (i % moduli + moduli) % moduli;
         }
         std::vector<int64_t> res = mul_mod(tmp, iv_tmp, moduli);
-        // for(auto i : res) {
-        //     std::cout << i << " ";
-        // }
-        // std::cout << std::endl;
         int64_t ans = res[res.size()-2];
         if (degree_ >= n) {
               ans = res[n-1];

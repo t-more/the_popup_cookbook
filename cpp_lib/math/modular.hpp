@@ -1,3 +1,4 @@
+// Author: Marcus Östling, Tomas Möre
 #pragma once
 #include <tuple>
 #include <optional>
