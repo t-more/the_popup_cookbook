@@ -18,13 +18,13 @@ class LinearRecurrence {
         matrix_ = Matrix<int64_t>((int)(this->degree_+1));
 
         // Set 1's across the matrix diagonalish
-        for (int c = 1, r = 0; c < this->degree_+1; c++, r++) {
+        for (size_t c = 1, r = 0; c < this->degree_+1; c++, r++) {
                 this->matrix_(r, c) = 1;
         }
 
         this->matrix_(this->degree_, this->degree_) = 1;
 
-        for (int c = 0; c < this->degree_; c++) {
+        for (size_t c = 0; c < this->degree_; c++) {
                 this->matrix_(this->degree_-1, c) =
                      this->coefficient_[this->coefficient_.size()-1-c];
         }

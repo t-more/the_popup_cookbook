@@ -270,7 +270,7 @@ public:
 
 
         // Find first bit
-        for (size_t i = 0; (size_t)1<<i <= n; i++) {
+        for (size_t i = 0; ((size_t)1 << i) <= n; i++) {
             if (n&(1<<i)) {
                 prev = i;
                 for (size_t m = 0; m < i; m++) {
@@ -281,8 +281,8 @@ public:
         }
         res = Matrix(cur);
 
-        for (size_t i = prev+1; (1<<i) < n; i++) {
-            if (n&(1<<i)) {
+        for (size_t i = prev+1; ((size_t)1 << (size_t)i) < n; i++) {
+            if (n & ((size_t)1<<i)) {
                 for(size_t m = 0; m < i - prev; m++) {
                     cur.mul_mod(Matrix<T>(cur), moduli);
                 }
