@@ -217,6 +217,7 @@ public:
                 T tmp_sum = 0;
                 for (size_t k = 0; k < rhs.rows(); ++k) {
                     tmp_sum += tmp(i,k)*rhs(k,j) % moduli;
+                    tmp_sum %= moduli;
                 }
                 (*this)(i,j) = tmp_sum % moduli;
             }
@@ -259,20 +260,20 @@ public:
             return Matrix<T>(*this);
         } else if (n == 2) {
             Matrix<T> res(*this);
-            res *= *this;
+            res.mul_mod(*this, moduli);
             return res;
         }
 
         Matrix<T> res(*this);
         Matrix<T> cur(*this);
-        int prev = 0;
+        size_t prev = 0;
 
 
         // Find first bit
-        for (int i = 0; 1<<i <= n; i++) {
+        for (size_t i = 0; (size_t)1<<i <= n; i++) {
             if (n&(1<<i)) {
                 prev = i;
-                for (int m = 0; m < i; m++) {
+                for (size_t m = 0; m < i; m++) {
                     cur.mul_mod(Matrix<T>(cur), moduli);
                 }
                 break;
@@ -280,9 +281,9 @@ public:
         }
         res = Matrix(cur);
 
-        for (int i = prev+1; (1<<i) < n; i++) {
+        for (size_t i = prev+1; (1<<i) < n; i++) {
             if (n&(1<<i)) {
-                for(int m = 0; m < i - prev; m++) {
+                for(size_t m = 0; m < i - prev; m++) {
                     cur.mul_mod(Matrix<T>(cur), moduli);
                 }
                 prev = i;

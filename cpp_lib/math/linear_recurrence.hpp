@@ -15,7 +15,7 @@ class LinearRecurrence {
     size_t steps_ = 0;
 
     void construct_init_matrix() {
-        matrix_ = Matrix<int64_t>(this->degree_+1);
+        matrix_ = Matrix<int64_t>((int)(this->degree_+1));
 
         // Set 1's across the matrix diagonalish
         for (int c = 1, r = 0; c < this->degree_+1; c++, r++) {
