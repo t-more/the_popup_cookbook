@@ -10,9 +10,7 @@ namespace popup {
         if(a == 0) {
             return {b, 0, 1};
         }
-
         auto [gcd, x, y] = extended_euclidean<T, N>(b % a, a);
-
         return {gcd, y - (b/a) * x, x};
     }
 
@@ -23,7 +21,6 @@ namespace popup {
         if(gcd != 1) {
             return std::nullopt;
         }
-
         return (x % (N)m + (N)m) % m;
     }
 
