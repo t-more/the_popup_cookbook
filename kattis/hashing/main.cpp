@@ -1,22 +1,11 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-#define rep(i, a, b) for(int i = a; i < (b); ++i)
-#define trav(a, x) for(auto& a : x)
-#define all(x) x.begin(), x.end()
-#define sz(x) (int)(x).size()
-#define EPS 10e-9
-
-typedef long long ll;
-typedef pair<int, int> pii;
-typedef vector<int> vi;
-
 unsigned long long mod(unsigned long long x, unsigned long long m) {
     return ((x % m) + m) % m;
 }
 
-int64_t mul_mod(uint64_t a, uint64_t b, uint64_t m)
-{
+int64_t mul_mod(uint64_t a, uint64_t b, uint64_t m) {
    uint64_t d = 0, mp2 = m >> 1;
    int i;
    if (a >= m) a %= m;
@@ -46,7 +35,6 @@ void compute_hash(
         hashes.push_back(hash_value);
         //p_pow = (p_pow * p) % m;
         p_pow = mul_mod(p_pow, p, m);
-
     }
 }
 
@@ -55,16 +43,18 @@ int main() {
     cin.tie(0);
 
     string str;
-    int q;
+    size_t q;
 
     cin >> str;
     cin >> q;
 
-    unsigned long long m = 1e9+9;
-    unsigned long long p = 31;
+    const unsigned long long m = 1e9+7;
+    const unsigned long long p = 31;
     vector<unsigned long long> inv(str.size());
     inv[0] = 1;
-    inv[1] = 838709685; // pow(2, 1e9+9) % m
+    //inv[1] = 838709685; // pow(2, 31) % 1e9+9
+    inv[1] = 129032259; // pow(2, 31) % 1e9+9
+    //inv[1] = 12; // pow(2, 31) % 53
     for(unsigned long long i = 2; i < str.size(); i++) {
         //inv[i] = (inv[i-1] * inv[1]) % m;
         inv[i] = mul_mod(inv[i-1], inv[1], m);
@@ -72,16 +62,18 @@ int main() {
 
     vector<unsigned long long> hashes;
     compute_hash(str, hashes, m, p);
-    for(int cnt = 0; cnt < q; cnt++) {
-        int i, j;
+    for(size_t cnt = 0; cnt < q; cnt++) {
+        size_t i, j;
         cin >> i >> j;
         j--;
         if(i == 0) {
-            cout << hashes[j] << "\n";
+            cout << hashes[j]*inv[i]%m << "\n";
         } else {
             i--;
-            //cout << mod(mod(hashes[j] - hashes[i], m)*inv[i+1], m) << "\n";
-            cout << mul_mod(mod(hashes[j] - hashes[i], m), inv[i+1], m) << "\n";
+            //cerr << hashes[j] << endl;
+            //cerr << hashes[i] << endl;
+            cout << mul_mod((hashes[j]+m - hashes[i])%m, inv[i+1], m) << "\n";
+            //cout << mul_mod(mod(hashes[j] - hashes[i], m), inv[i+1], m) << "\n";
         }
     }
 
