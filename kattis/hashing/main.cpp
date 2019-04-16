@@ -1,24 +1,41 @@
 #include <bits/stdc++.h>
 using namespace std;
+char next_char() {
+  char c = getchar_unlocked();
+  while(c == 32 || c == 10) {
+    c = getchar_unlocked();
+  }
+  return c;
+}
+
+uint64_t next_word64() {
+  char c = getchar_unlocked();
+  while ('0' > c || '9' < c) {
+    c = getchar_unlocked();
+  }
+  int x = 0;
+  while ('0' <= c && c <= '9') {
+    x = 10 * x + c - 48;
+    c = getchar_unlocked();
+  }
+  return x;
+}
 
 unsigned long long mod(unsigned long long x, unsigned long long m) {
     return ((x % m) + m) % m;
 }
 
-int64_t mul_mod(uint64_t a, uint64_t b, uint64_t m) {
-   uint64_t d = 0, mp2 = m >> 1;
-   int i;
+uint64_t mul_mod(uint64_t a, uint64_t b, uint64_t m)
+{
+   long double x;
+   uint64_t c;
+   int64_t r;
    if (a >= m) a %= m;
    if (b >= m) b %= m;
-   for (i = 0; i < 64; ++i)
-   {
-       d = (d > mp2) ? (d << 1) - m : d << 1;
-       if (a & 0x8000000000000000ULL)
-           d += b;
-       if (d >= m) d -= m;
-       a <<= 1;
-   }
-   return d;
+   x = a;
+   c = x * b / m;
+   r = (int64_t)(a * b - c * m) % (int64_t)m;
+   return r < 0 ? r + m : r;
 }
 
 void compute_hash(
@@ -31,21 +48,24 @@ void compute_hash(
     unsigned long long p_pow = 1;
     for (char c : s) {
         //hash_value = (hash_value + (c - 'a' + 1) * p_pow) % m;
-        hash_value = (hash_value + mul_mod(c - 'a' + 1, p_pow, m)) % m;
+        hash_value = (hash_value + (c - 'a' + 1) * p_pow) % m;
         hashes.push_back(hash_value);
         //p_pow = (p_pow * p) % m;
-        p_pow = mul_mod(p_pow, p, m);
+        p_pow = p_pow *p % m ;
     }
 }
 
 int main() {
-    cin.sync_with_stdio(0);
-    cin.tie(0);
-
     string str;
-    size_t q;
-    cin >> str;
-    cin >> q;
+    str.reserve(300000);
+
+
+    char c = getchar_unlocked();
+    while (c != '\n') {
+        str.push_back(c);
+        c = getchar_unlocked();
+    }
+    size_t q = next_word64();
 
     const unsigned long long m = 922337220451ULL;
     const unsigned long long p = 16069ULL;
@@ -60,13 +80,13 @@ int main() {
     }
 
     vector<unsigned long long> hashes;
+    hashes.reserve(300000);
     compute_hash(str, hashes, m, p);
     for(size_t cnt = 0; cnt < q; cnt++) {
-        size_t i, j;
-        cin >> i >> j;
+        size_t i = next_word64(), j = next_word64();
         j--;
         if(i == 0) {
-            cout << hashes[j]*inv[i]%m << "\n";
+            cout << hashes[j] << "\n";
         } else {
             i--;
             //cerr << hashes[j] << endl;
