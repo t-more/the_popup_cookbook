@@ -11,13 +11,16 @@ typedef long long ll;
 typedef pair<int, int> pii;
 typedef vector<int> vi;
 
-long long mod(long long x, long long m) {
+unsigned long long mod(unsigned long long x, unsigned long long m) {
     return ((x % m) + m) % m;
 }
 
-long long compute_hash(string const& s, vector<long long> &hashes) {
-    const int p = 31;
-    const int m = 1e9 + 9;
+void compute_hash(
+        string const& s, 
+        vector<unsigned long long> &hashes,
+        unsigned long long m,
+        unsigned long long p)
+{
     long long hash_value = 0;
     long long p_pow = 1;
     for (char c : s) {
@@ -26,7 +29,6 @@ long long compute_hash(string const& s, vector<long long> &hashes) {
         p_pow = (p_pow * p) % m;
 
     }
-    return hash_value;
 }
 
 int main() {
@@ -39,22 +41,25 @@ int main() {
     cin >> str;
     cin >> q;
 
-    long long m = 1e9+9;
-    long long p = 31;
-    vector<long long> inv(str.size());
+    unsigned long long m = 1e9+9;
+    unsigned long long p = 31;
+    vector<unsigned long long> inv(str.size());
     inv[0] = 1;
     inv[1] = 838709685; // pow(2, 1e9+9) % m
-    for(long long i = 2; i <= p; i++) {
+    for(unsigned long long i = 2; i <= p; i++) {
         inv[i] = (inv[i-1] * inv[1]) % m;
     }
 
-    vector<ll> hashes;
-    compute_hash(str, hashes);
-    cout << hashes.size() << endl;
+    vector<unsigned long long> hashes;
+    compute_hash(str, hashes, m, p);
+    for(auto i : hashes) {
+        cerr << i << endl;
+    }
     for(int cnt = 0; cnt < q; cnt++) {
         int i, j;
         cin >> i >> j;
         if(i == 0) {
+            cerr << "i == 0\n";
             cout << hashes[j-1] << "\n";
         } else {
             cout << mod(mod(hashes[j-1] - hashes[i-2], m)*inv[i-1], m) << "\n";
