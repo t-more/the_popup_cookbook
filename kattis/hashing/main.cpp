@@ -22,7 +22,7 @@ int64_t mul_mod(uint64_t a, uint64_t b, uint64_t m) {
 }
 
 void compute_hash(
-        string const& s, 
+        string const& s,
         vector<unsigned long long> &hashes,
         unsigned long long m,
         unsigned long long p)
@@ -44,16 +44,15 @@ int main() {
 
     string str;
     size_t q;
-
     cin >> str;
     cin >> q;
 
-    const unsigned long long m = 1e9+7;
-    const unsigned long long p = 31;
+    const unsigned long long m = 922337220451ULL;
+    const unsigned long long p = 16069ULL;
     vector<unsigned long long> inv(str.size());
     inv[0] = 1;
     //inv[1] = 838709685; // pow(2, 31) % 1e9+9
-    inv[1] = 129032259; // pow(2, 31) % 1e9+9
+    inv[1] = 184249329619ULL; // pow(2, 31) % 1e9+9
     //inv[1] = 12; // pow(2, 31) % 53
     for(unsigned long long i = 2; i < str.size(); i++) {
         //inv[i] = (inv[i-1] * inv[1]) % m;
