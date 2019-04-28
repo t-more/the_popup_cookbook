@@ -1,6 +1,8 @@
+#pragma once
 #include <cmath>
 #include <initializer_list>
-
+#include <cstring>
+#include <array>
 
 namespace popup {
     const double PI = 3.1415926535897932384626433;
@@ -11,8 +13,9 @@ namespace popup {
     public:
 
         Vec() {
-            vec_ = {T(), T()};
+            vec_ = {0};
         }
+
         Vec(const T e) {
             vec_ = {e};
         }
@@ -22,8 +25,33 @@ namespace popup {
         }
 
         Vec(const Vec<Dim, T>& other) {
-            vec_ = other.vec_;
+            std::memcpy(vec_, other.vec_, sizeof(vec_));
         }
+p
+        Vec(const std::array<T, Dim>& other) {
+            std::memcpy(vec_, other.begin(), sizeof(vec_));
+        }
+
+        // Vec(const std::initializer_list<T> il) {
+        //     int i = 0;
+        //     for (; i < size() && i < il.size(); i++) {
+        //         vec_[i] = il[i];
+        //     }
+        //     for (; i < size(); i++) {
+        //         vec_[i] = 0;
+        //     }
+        // }
+
+
+        // Vec(const std::initializer_list<T>& il) {
+        //     int i = 0;
+        //     for (; i < size() && i < il.size(); i++) {
+        //         vec_[i] = il[i];
+        //     }
+        //     for (; i < size(); i++) {
+        //         vec_[i] = 0;
+        //     }
+        // }
 
         size_t size() const {
             return Dim;
@@ -224,6 +252,12 @@ namespace popup {
     };
 
     template<typename T>
+    using Vec2 = Vec<2, T>;
+
+    template<typename T>
+    using Vec3 = Vec<3, T>;
+
+    template<typename T>
     Vec<3, T> cross(const Vec<3, T>& a,  const Vec<3, T>& b) {
         return {
                 a[1] * b[2] - a[2] * b[1],
@@ -248,4 +282,10 @@ namespace popup {
         }
         return res;
     }
+
+    template<typename T>
+    Vec2<T> vec2(const T p1, const T p2){
+        return {{p1,p2}};
+    }
+
 } // namespace popup

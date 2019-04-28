@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
-#include <cstdint>
+
 
 /**
  *  Sieve of Eratosthenes
