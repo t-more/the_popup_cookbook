@@ -13,7 +13,7 @@ namespace popup {
     public:
 
         Vec() {
-            vec_ = {0};
+            std::fill(vec_, vec_+Dim, 0);
         }
 
         Vec(const T e) {
@@ -27,7 +27,7 @@ namespace popup {
         Vec(const Vec<Dim, T>& other) {
             std::memcpy(vec_, other.vec_, sizeof(vec_));
         }
-p
+
         Vec(const std::array<T, Dim>& other) {
             std::memcpy(vec_, other.begin(), sizeof(vec_));
         }
@@ -80,7 +80,7 @@ p
         // Addition
         void operator+=(const Vec<Dim, T>& other) {
             auto it = other.cbegin();
-            for (auto& e : this) {
+            for (auto& e : *this) {
                 e = *(it++) + e;
             }
         }
@@ -92,7 +92,7 @@ p
         }
 
         void operator+=(const T& s) {
-            for (auto& e : this) {
+            for (auto& e : *this) {
                 e = s + e;
             }
         }
@@ -112,7 +112,7 @@ p
         // Subtraction
         void operator-=(const Vec<Dim, T>& other) {
             auto it = other.cbegin();
-            for (auto& e : this) {
+            for (auto& e : *this) {
                 e = *(it++) - e;
             }
         }
@@ -124,7 +124,7 @@ p
         }
 
         void operator-=(const T& s) {
-            for (auto& e : this) {
+            for (auto& e : *this) {
                 e = e - s;
             }
         }
@@ -286,6 +286,21 @@ p
     template<typename T>
     Vec2<T> vec2(const T p1, const T p2){
         return {{p1,p2}};
+    }
+
+    template <unsigned int Dim, typename T>
+    std::ostream& operator<<(std::ostream& out, const Vec<Dim, T> &vec) {
+        out << "[";
+        for(size_t i = 0; i < Dim; i++) {
+            if (i+1 != Dim) {
+                out << vec[i] << ", ";
+            } else {
+                out << vec[i];
+            }
+        }
+        out << "]";
+
+        return out;
     }
 
 } // namespace popup
