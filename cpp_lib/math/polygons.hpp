@@ -115,7 +115,7 @@ namespace popup {
     template<typename T, typename RAItr>
     PointLocation point_in_polygon(const Vec2<T>& point, RAItr begin, RAItr end) {
         const T EPS = 1e-9;
-        const Vec2<T> outside = {{std::numeric_limits<T>::max(), point[1]}};
+        const Vec2<T> outside = {{2e18, point[1]}};  // {{std::numeric_limits<T>::max(), point[1]}};
         size_t num_intersections = 0;
         auto prev = *begin;
         auto it = begin;
@@ -141,8 +141,8 @@ namespace popup {
         for (; it != end; it++) {
             num_intersections += count_intersections(prev, *it);
             if (point_on_line(point, prev, *it)) {
-                std::cerr << point << " " << prev << " " << *it << std::endl;
-                std::cerr << "Here" << std::endl;
+                // std::cerr << point << " " << prev << " " << *it << std::endl;
+                // std::cerr << "Here" << std::endl;
                 return PointLocation::Border;
             }
             prev = *it;
@@ -150,7 +150,7 @@ namespace popup {
 
         num_intersections += count_intersections(prev, *begin);
         if (point_on_line(point,  prev, *begin)) {
-            std::cerr << "Here too" << std::endl;
+            //            std::cerr << "Here too" << std::endl;
             return PointLocation::Border;
         }
 
