@@ -7,8 +7,8 @@
 #include <limits>
 
 namespace popup {
-    
-    template <typename T> 
+
+    template <typename T>
     int sign(T n) {
         return (int)(T(0) < n) - (int)(n < T(0));
     }
@@ -53,42 +53,63 @@ namespace popup {
     }
 
     template<typename T>
+    bool interval_intersects_1d(T ae, T be, T ce, T de) {
+        if (ae > be) std::swap(ae, be);
+        if (ce > de) std::swap(ce, de);
+        return std::max(ae, ce) <= std::min(be, de);
+    };
+
+    template<unsigned int Dim, typename T>
+    bool interval_intersects(
+        const Vec<Dim, T> &l1_begin,
+        const Vec<Dim, T> &l1_end,
+        const Vec<Dim, T> &l2_begin,
+        const Vec<Dim, T> &l2_end
+    ) {
+        for (size_t i = 0; i < Dim; i++) {
+            auto insertects_in_dim = interval_intersects_1d(
+                l1_begin[i],
+                l1_end[i],
+                l2_begin[i],
+                l2_end[i]);
+            if (!insertects_in_dim) return false;
+        }
+        return true;
+    };
+
+    template<typename T>
+    bool point_on_line(const Vec2<T>& point, Vec2<T> l1, Vec2<T> l2) {
+        const double EPS = 1e-9;
+        if (l2[0] < l1[0]) std::swap(l1, l2);
+        return (l1[0] <= point[0] && point[0] <= l2[0])
+            && (std::abs(cross(point - l1, l2 - l1)) <  EPS);
+    }
+
+    template<typename T>
     bool line_intersect(
-            const Vec2<T> &l1_begin, 
-            const Vec2<T> &l1_end, 
-            const Vec2<T> &l2_begin, 
+            const Vec2<T> &l1_begin,
+            const Vec2<T> &l1_end,
+            const Vec2<T> &l2_begin,
             const Vec2<T> &l2_end) {
         const T EPS = 1e-9;
-        const auto interval_intersect = [](T ae, T be, T ce, T de) {
-            if (ae > be) std::swap(ae, be);
-            if (ce > de) std::swap(ce, de);
-            return std::max(ae, ce) <= std::min(be, de);
-        };
-        if (std::abs(cross(l1_begin - l2_begin, l2_end - l2_begin)) < EPS && 
+        if (std::abs(cross(l1_begin - l2_begin, l2_end - l2_begin)) < EPS &&
             std::abs(cross(l1_end   - l2_begin, l2_end - l2_begin)) < EPS) {
             return
-                interval_intersect(
-                        l1_begin[0], 
-                        l1_end[0], 
-                        l2_begin[0], 
-                        l2_end[0]) &&
-                interval_intersect(
-                        l1_begin[1], 
-                        l1_end[1], 
-                        l2_begin[1], 
-                        l2_end[1]);
+                interval_intersects(
+                    l1_begin, l1_end,
+                    l2_begin, l2_end);
         }
         return
-            (sign(cross(l1_end - l1_begin, l2_end - l1_begin)) != 
+            (sign(cross(l1_end - l1_begin, l2_end - l1_begin)) !=
             sign(cross(l1_end - l1_begin, l2_begin - l1_begin))) &&
             (sign(cross(l2_end - l2_begin, l1_begin - l2_begin)) !=
             sign(cross(l2_end - l2_begin, l1_end - l2_begin)));
     }
-    
+
     enum PointLocation {
         Outside = 0,
         Border,
-        Inside 
+        Inside
     };
 
     template<typename T, typename RAItr>
@@ -99,28 +120,38 @@ namespace popup {
         auto prev = *begin;
         auto it = begin;
         it++;
+        const auto count_intersections =
+            [&](const Vec2<T> p1, const Vec2<T> p2) -> size_t {
+                bool intersects = line_intersect(
+                    point,
+                    outside,
+                    p1,
+                    p2
+                );
+                auto control_point = p1;
+                if (p2[1] < control_point[1]) {
+                    control_point = p2;
+                }
+                if (!(std::abs(cross(control_point - point, outside - point)) < EPS)) {
+                    return (size_t)intersects;
+                } else {
+                    return 0;
+                }
+            };
         for (; it != end; it++) {
-            bool intersects = line_intersect(
-                                            point, 
-                                            outside, 
-                                            prev, 
-                                            *it
-                                        );
-            num_intersections += (size_t)intersects;
-            if (std::abs(cross(point - prev, *it - prev)) < EPS) {
+            num_intersections += count_intersections(prev, *it);
+            if (point_on_line(point, prev, *it)) {
+                std::cerr << point << " " << prev << " " << *it << std::endl;
+                std::cerr << "Here" << std::endl;
                 return PointLocation::Border;
             }
             prev = *it;
         }
 
-        num_intersections += (size_t)line_intersect(
-                                        point, 
-                                        outside, 
-                                        prev, 
-                                        *begin
-                                     );
-        if (std::abs(cross(point - prev, *begin - prev)) < EPS) {
-           return PointLocation::Border;
+        num_intersections += count_intersections(prev, *begin);
+        if (point_on_line(point,  prev, *begin)) {
+            std::cerr << "Here too" << std::endl;
+            return PointLocation::Border;
         }
 
         if (num_intersections % 2 == 1) {
@@ -129,5 +160,5 @@ namespace popup {
             return PointLocation::Outside;
         }
     }
-    
+
 } // namespace popup
