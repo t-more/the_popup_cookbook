@@ -128,7 +128,7 @@ namespace popup {
                 cross(it->normalized() - point, prev.normalized() - point);
             double dot_angle =
                 (it->normalized() - point).dot(prev.normalized() - point);
-            angle_sum += atan2(cross_angle, dot_angle);
+            angle_sum += std::atan2(cross_angle, dot_angle);
             if (point_on_line(point, prev, *it)) {
                 return PointLocation::Border;
             }
@@ -139,7 +139,7 @@ namespace popup {
             cross(it->normalized() - point, prev.normalized() - point);
         double dot_angle =
             (it->normalized() - point).dot(prev.normalized() - point);
-        angle_sum += atan2(cross_angle, dot_angle);
+        angle_sum += std::atan2(cross_angle, dot_angle);
         if (point_on_line(point,  prev, *begin)) {
             return PointLocation::Border;
         }
