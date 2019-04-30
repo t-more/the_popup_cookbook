@@ -52,8 +52,17 @@ namespace popup {
         const T * cend() const {
             return vec_ + size();
         }
+
+        T at(const size_t i) const {
+            return vec_[i];
+        }
+
         T& at(const size_t i) {
             return vec_[i];
+        }
+
+        T operator[](const size_t i) const {
+            return at(i);
         }
 
         T& operator[](const size_t i) {
@@ -371,7 +380,7 @@ namespace popup {
         T dot(const Vec<Dim, T>& other) const {
             T res = T();
             auto it1 = cbegin();
-            auto it2 = other->cbegin();
+            auto it2 = other.cbegin();
             while (it1 != cend()) {
                 res += (*it1) * (*it2);
             }
