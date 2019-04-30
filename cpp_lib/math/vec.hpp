@@ -399,7 +399,7 @@ namespace popup {
             auto it1 = cbegin();
             auto it2 = other.cbegin();
             while (it1 != cend()) {
-                res += (*it1) * (*it2);
+                res += (*(it1++)) * (*(it2++));
             }
             return res;
         }
