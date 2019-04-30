@@ -52,8 +52,17 @@ namespace popup {
         const T * cend() const {
             return vec_ + size();
         }
+
+        T at(const size_t i) const {
+            return vec_[i];
+        }
+
         T& at(const size_t i) {
             return vec_[i];
+        }
+
+        T operator[](const size_t i) const {
+            return at(i);
         }
 
         T& operator[](const size_t i) {
