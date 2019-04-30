@@ -23,7 +23,6 @@ int main() {
       while (num_points--) {
           double x,y;
           cin >> x >> y;
-          cerr << "R:" << x << y << endl;
           popup::Vec2<double> t({x,y});
           points.push_back(t);
       }
@@ -32,8 +31,7 @@ int main() {
           points.begin(),
           points.end()
       );
-      cout << order << " " << area << endl;
-      cerr << "Potato" << endl;
+      cout << std::setprecision(1) << std::fixed << order << " " << area << endl;
   }
   return 0;
 }

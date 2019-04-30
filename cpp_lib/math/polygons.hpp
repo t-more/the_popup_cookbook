@@ -119,50 +119,35 @@ namespace popup {
     template<typename T, typename RAItr>
     PointLocation point_in_polygon(const Vec2<T>& point, RAItr begin, RAItr end) {
         const T EPS = 1e-9;
-        const Vec2<T> outside = {{2e10, point[1]}};  // {{std::numeric_limits<T>::max(), point[1]}};
-        size_t num_intersections = 0;
+        double angle_sum = 0;
         auto prev = *begin;
         auto it = begin;
         it++;
-        const auto count_intersections =
-            [&](const Vec2<T> p1, const Vec2<T> p2) -> size_t {
-                bool intersects = line_intersect(
-                    point,
-                    outside,
-                    p1,
-                    p2
-                );
-                auto control_point = p1;
-                if (p2[1] < control_point[1]) {
-                    control_point = p2;
-                }
-                if (!(std::abs(cross(control_point - point, outside - point)) < EPS)) {
-                    return (size_t)intersects;
-                } else {
-                    return 0;
-                }
-            };
         for (; it != end; it++) {
-            num_intersections += count_intersections(prev, *it);
+            double cross_angle =
+                cross(it->normalized() - point, prev.normalized() - point);
+            double dot_angle =
+                (it->normalized() - point).dot(prev.normalized() - point);
+            angle_sum += atan2(cross_angle, dot_angle);
             if (point_on_line(point, prev, *it)) {
-                // std::cerr << point << " " << prev << " " << *it << std::endl;
-                // std::cerr << "Here" << std::endl;
                 return PointLocation::Border;
             }
             prev = *it;
         }
 
-        num_intersections += count_intersections(prev, *begin);
+        double cross_angle =
+            cross(it->normalized() - point, prev.normalized() - point);
+        double dot_angle =
+            (it->normalized() - point).dot(prev.normalized() - point);
+        angle_sum += atan2(cross_angle, dot_angle);
         if (point_on_line(point,  prev, *begin)) {
-            //            std::cerr << "Here too" << std::endl;
             return PointLocation::Border;
         }
 
-        if (num_intersections % 2 == 1) {
-            return PointLocation::Inside;
-        } else {
+        if (std::abs(angle_sum) < EPS) {
             return PointLocation::Outside;
+        } else {
+            return PointLocation::Inside;
         }
     }
-
 } // namespace popup
