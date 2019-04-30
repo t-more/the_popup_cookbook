@@ -389,7 +389,7 @@ namespace popup {
 
         T norm() const {
             T res = T();
-            for (const auto& e : *this) {
+            for (const auto & const e  : point_) {
                 res += e * e;
             }
             return std::sqrt(res);
