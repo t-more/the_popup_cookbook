@@ -45,6 +45,14 @@ namespace popup {
             return vec_ + size();
         }
 
+        const T * begin() const {
+            return vec_;
+        }
+
+        const T * end() const {
+            return vec_ + size();
+        }
+
         const T * cbegin() const {
             return vec_;
         }
@@ -270,6 +278,15 @@ namespace popup {
             return point_.end();
         }
 
+        const T *  begin() const {
+            return point_.begin();
+        }
+
+        const  T * end() const {
+            return point_.end();
+        }
+
+
         inline const T * cbegin() const {
             return point_.cbegin();
         }
@@ -389,7 +406,7 @@ namespace popup {
 
         T norm() const {
             T res = T();
-            for (const auto & const e  : point_) {
+            for (const auto &  e  : *this) {
                 res += e * e;
             }
             return std::sqrt(res);
