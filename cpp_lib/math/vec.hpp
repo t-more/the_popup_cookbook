@@ -148,7 +148,7 @@ namespace popup {
         }
 
         void operator*=(const T& s) {
-            for (auto& e : this) {
+            for (auto& e : *this) {
                 e = e / s;
             }
         }
@@ -168,7 +168,7 @@ namespace popup {
         // Divison
         void operator/=(const Point<Dim, T>& other) {
             auto it = other.cbegin();
-            for (auto& e : this) {
+            for (auto& e : *this) {
                 e = *(it++) / e;
             }
         }
@@ -180,7 +180,7 @@ namespace popup {
         }
 
         void operator/=(const T& s) {
-            for (auto& e : this) {
+            for (auto& e : *this) {
                 e = e / s;
             }
         }
@@ -389,7 +389,7 @@ namespace popup {
 
         T norm() const {
             T res = T();
-            for (auto& e : this) {
+            for (auto& e : *this) {
                 res += e * e;
             }
             return std::sqrt(res);
