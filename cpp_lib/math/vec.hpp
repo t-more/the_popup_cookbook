@@ -389,7 +389,7 @@ namespace popup {
 
         T norm() const {
             T res = T();
-            for (auto& e : point_) {
+            for (const auto& e : *this) {
                 res += e * e;
             }
             return std::sqrt(res);
@@ -398,7 +398,7 @@ namespace popup {
         /**
          * Mutates the vector into a normalized form.
          */
-        void normalize() const {
+        void normalize() {
             point_ /= norm();
         }
 
