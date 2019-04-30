@@ -8,6 +8,11 @@
 
 namespace popup {
 
+    template <unsigned int Dim, typename T>
+    class LineSegment {
+
+    };
+
     template <typename T>
     int sign(T n) {
         return (int)(T(0) < n) - (int)(n < T(0));
@@ -30,7 +35,6 @@ namespace popup {
         return os;
     }
 
-
     template<typename T, typename RAItr>
     std::pair<ClockOrder, T> identify_order(RAItr begin, RAItr end) {
         assert((end - begin) >= 3);
@@ -43,11 +47,11 @@ namespace popup {
         itr++;
         while (itr != end) {
             Vec2<T>& current = *(itr++);
-            sum += (last[0] - current[0]) * (last[1] + current[1]) / 2.0;
+            sum += (last[0] - current[0]) * (last[1] + current[1]);
             last = current;
         }
-        sum += (last[0] - first[0]) * (last[1] + first[1]) / 2.0;
-
+        sum += (last[0] - first[0]) * (last[1] + first[1]);
+        sum /= 2.0;
         return {sum > 0 ? ClockOrder::CCW : ClockOrder::CW
                 , std::abs(sum)};
     }
@@ -81,8 +85,8 @@ namespace popup {
     bool point_on_line(const Vec2<T>& point, Vec2<T> l1, Vec2<T> l2) {
         const double EPS = 1e-9;
         if (l2[0] < l1[0]) std::swap(l1, l2);
-        return (l1[0] <= point[0] && point[0] <= l2[0])
-            && (std::abs(cross(point - l1, l2 - l1)) <  EPS);
+        return (l1[0] <= point[0] && point[0] < l2[0])
+            && (std::abs(cross(point - l1, l2 - l1)) < EPS);
     }
 
     template<typename T>
@@ -115,7 +119,7 @@ namespace popup {
     template<typename T, typename RAItr>
     PointLocation point_in_polygon(const Vec2<T>& point, RAItr begin, RAItr end) {
         const T EPS = 1e-9;
-        const Vec2<T> outside = {{2e18, point[1]}};  // {{std::numeric_limits<T>::max(), point[1]}};
+        const Vec2<T> outside = {{2e10, point[1]}};  // {{std::numeric_limits<T>::max(), point[1]}};
         size_t num_intersections = 0;
         auto prev = *begin;
         auto it = begin;
