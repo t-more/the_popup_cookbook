@@ -380,7 +380,7 @@ namespace popup {
         T dot(const Vec<Dim, T>& other) const {
             T res = T();
             auto it1 = cbegin();
-            auto it2 = other->cbegin();
+            auto it2 = other.cbegin();
             while (it1 != cend()) {
                 res += (*it1) * (*it2);
             }
