@@ -30,8 +30,8 @@ namespace popup {
         std::optional<LineSegment> interval_overlap(
                 const LineSegment& other,
                 T eps = 1e-9) const {
-            auto first = max_dim<0>(*min_, *other.min_);
-            auto second = min_dim<0>(*max_, *other.max_);
+            auto first = std::max(*min_, *other.min_);
+            auto second = std::min(*max_, *other.max_);
             if (first[0] <= second[0] + eps) {
                 return {{first, second}};
             } else {
@@ -72,6 +72,16 @@ namespace popup {
         T length() {
             return start_.distance(end_);
         }
+
+
+        bool contains_point(const Point<2, T>& point) const {
+            const double EPS = 1e-9;
+            double len1 = point.distance_to(*min_);
+            double len2 = point.distance_to(*max_);
+            double total_len = (*min_).distance_to(*max_);
+            return (std::abs(len1+len2-total_len) < EPS);
+        }
+
 
         /**
          *
@@ -139,7 +149,7 @@ namespace popup {
                                 , overlap};
                     }
                 }
-            } else if (!parallel(other) && intersects(other)) {
+            } else if (intersects(other)) {
                 if (start_.comparable(end_)) {
                     return {IntersectionType::PointIntersect
                             , *this};
@@ -168,8 +178,10 @@ namespace popup {
                 //auto u = -((start_[0] - end_[0])*(start_[1] - other.start_[1]) - (start_[1] - end_[1]) * (start_[0] - other.start_[0])) / ((start_[0] - end_[0]) * (other.start_[1] - other.end_[1]) - (start_[1] - end_[1]) * (other.start_[0] - other.end_[0]));
                 Point<2,T> point = {{ start_[0] + t * (end_[0] - start_[0])
                                       , start_[1] + t * (end_[1] - start_[1])}};
-                return {IntersectionType::PointIntersect
-                        , LineSegment(point, point)};
+                if (contains_point(point)) {
+                    return {IntersectionType::PointIntersect
+                            , LineSegment(point, point)};
+                }
             }
             return {IntersectionType::None
                     , LineSegment<T>()};

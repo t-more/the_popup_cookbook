@@ -215,6 +215,8 @@ namespace popup {
             while (it1 != cend()) {
                 auto temp = (*it1) - (*it2);
                 res += temp * temp;
+                it1++;
+                it2++;
             }
             return std::sqrt(res);
         }
@@ -226,6 +228,15 @@ namespace popup {
                 }
             }
             return true;
+        }
+
+        bool operator<(const Point<Dim, T>& other) const {
+            for (size_t i = 0; i < dim(); i++) {
+                if (at(i) < other.at(i)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
     };
