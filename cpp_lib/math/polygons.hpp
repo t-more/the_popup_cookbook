@@ -84,12 +84,10 @@ namespace popup {
     template<typename T>
     bool point_on_line(const Vec2<T>& point, Vec2<T> l1, Vec2<T> l2) {
         const double EPS = 1e-15;
-        if (l2[0] < l1[0]) std::swap(l1, l2);
-        // std::cout << "Check cross: " << point << " " << l1 << " " << l2 << " "
-        //     << std::abs(cross(point - l1, l2 - l1)) << std::endl;
-        return (l1[0] <= point[0] && point[0] <= l2[0])
-            && (std::min(l1[1], l2[1]) <= point[1] && point[1] <= std::max(l1[1],l2[1]))
-            && (std::abs(cross(point - l1, l2 - l1)) < EPS);
+        double len1 = (point - l1).norm();
+        double len2 = (point - l2).norm();
+        double total_len = (l1 - l2).norm();
+        return (std::abs(len1+len2-total_len) < EPS);
     }
 
     template<typename T>
