@@ -13,6 +13,14 @@ typedef long long ll;
 typedef pair<int, int> pii;
 typedef vector<int> vi;
 
+double fix_zero(double d) {
+    if (abs(d) < 0.01) {
+        return 0;
+    } else {
+        return d;
+    }
+}
+
 int main() {
   cin.sync_with_stdio(0);
   cin.tie(0);
@@ -34,12 +42,12 @@ int main() {
       case IntersectionType::SegmentIntersect:
           // cout << ans.second.start()[0] << " " << ans.second.start()[1] << " "
           //      << ans.second.end()[0] << " " << ans.second.end()[1] << "\n";
-          cout << ans.second.min_point()[0] << " " << ans.second.min_point()[1] << " "
-              << ans.second.max_point()[0] << " " << ans.second.max_point()[1] << "\n";
+          cout << fix_zero(ans.second.min_point()[0]) << " " << fix_zero(ans.second.min_point()[1]) << " "
+               << fix_zero(ans.second.max_point()[0]) << " " << fix_zero(ans.second.max_point()[1]) << "\n";
           break;
       case IntersectionType::PointIntersect:
-          cout << ans.second.start()[0] << " "
-               << ans.second.start()[1] << "\n";
+          cout << fix_zero(ans.second.start()[0]) << " "
+               << fix_zero(ans.second.start()[1]) << "\n";
           break;
       }
   }

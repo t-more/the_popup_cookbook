@@ -88,19 +88,27 @@ namespace popup {
             }
         }
 
-        Point<2, T> start() {
+        Point<2, T> start() const {
             return start_;
         }
 
-        Point<2, T> end() {
+        Point<2, T> end() const {
             return end_;
         }
 
-        Point<2, T>& min_point() {
+        const Point<2, T>& min_point() const {
             return *min_;
         }
 
-        Point<2, T>& max_point() {
+        const Point<2, T>& max_point() const {
+            return *max_;
+        }
+
+        Point<2, T> min_point() {
+            return *min_;
+        }
+
+        Point<2, T> max_point() {
             return *max_;
         }
         /**
@@ -111,12 +119,11 @@ namespace popup {
         }
 
 
-        bool contains_point(const Point<2, T>& point) const {
-            const double EPS = 1e-9;
-            double len1 = point.distance_to(*min_);
-            double len2 = point.distance_to(*max_);
-            double total_len = (*min_).distance_to(*max_);
-            return (std::abs(len1+len2-total_len) < EPS);
+        bool contains_point(const Point<2, T>& point, T eps = 1e-2) const {
+            T len1 = point.distance_to(start_);
+            T len2 = point.distance_to(end_);
+            T total_len = start_.distance_to(end_);
+            return (std::abs(len1+len2-total_len) < eps);
         }
 
 
@@ -146,15 +153,22 @@ namespace popup {
          * Returns true if the two line segments are colinear.
          */
         bool colinear(const LineSegment &other) const {
-            auto v1 = Vec<2, T>(*min_ - *max_);
+            auto v1 = Vec<2, T>(*max_ - *min_);
             v1.normalize();
-            auto v2 = Vec<2, T>(*other.min_ - *other.max_);
+            auto v2 = Vec<2, T>(*other.max_ - *other.min_);
             v2.normalize();
-            Vec<2, T> v3 = Vec<2, T>(*min_ - *other.max_);
-            if (min_->comparable(*other.max_)) {
-                v3 = Vec<2, T>(*max_ - *other.min_);
+            Vec<2, T> v3;
+            if (*other.max_ < *max_) {
+                v3 = Vec<2, T>(*max_ - *other.max_);
+                // std::cout << Vec(v3) << std::endl;
+                // std::cout << Vec(*max_) << std::endl;
+                // std::cout << Vec(*other.max_) << std::endl;
+                // std::cout << Vec(*max_ - *other.max_) << std::endl;
+            } else {
+                v3 = Vec<2, T>(*other.max_ - *min_);
             }
             v3.normalize();
+            //            std::cerr << Vec(v1) << " " << Vec(v2) << " " << Vec(v3) << std::endl;
             return v1.comparable(v2) && v3.comparable(v1);
         }
 
@@ -186,7 +200,9 @@ namespace popup {
                                 , overlap};
                     }
                 }
+
             } else if (intersects(other)) {
+
                 if (start_.comparable(end_)) {
                     return {IntersectionType::PointIntersect
                             , *this};
@@ -194,12 +210,14 @@ namespace popup {
                     return {IntersectionType::PointIntersect
                             , other};
                 }
-                auto t = ((start_[0] - other.start_[0]) * (other.start_[1] - other.end_[1]) 
+                auto t = ((start_[0] - other.start_[0]) * (other.start_[1] - other.end_[1])
                         - (start_[1] - other.start_[1]) * (other.start_[0] - other.end_[0]))
-                        / ((start_[0] - end_[0])*(other.start_[1]-other.end_[1]) 
+                        / ((start_[0] - end_[0])*(other.start_[1]-other.end_[1])
                         - (start_[1] - end_[1]) * (other.start_[0] - other.end_[0]));
                 Point<2,T> point = {{ start_[0] + t * (end_[0] - start_[0])
                                       , start_[1] + t * (end_[1] - start_[1])}};
+
+
                 if (contains_point(point) && other.contains_point(point)) {
                     return {IntersectionType::PointIntersect
                             , LineSegment(point, point)};

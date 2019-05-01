@@ -115,7 +115,7 @@ namespace popup {
         void operator-=(const Point<Dim, T>& other) {
             auto it = other.cbegin();
             for (auto& e : *this) {
-                e = *(it++) - e;
+                e = e - *(it++);
             }
         }
 
@@ -207,16 +207,15 @@ namespace popup {
             return res;
         }
 
+
         T distance_to(const Point<Dim, T>& other) const {
             T res = T();
             auto it1 = cbegin();
             auto it2 = other.cbegin();
 
             while (it1 != cend()) {
-                auto temp = (*it1) - (*it2);
+                auto temp = (*it1++) - (*it2++);
                 res += temp * temp;
-                it1++;
-                it2++;
             }
             return std::sqrt(res);
         }
