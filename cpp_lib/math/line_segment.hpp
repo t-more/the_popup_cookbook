@@ -32,11 +32,14 @@ namespace popup {
                 T eps = 1e-9) const {
             auto first = std::max(*min_, *other.min_);
             auto second = std::min(*max_, *other.max_);
-            if (first[0] <= second[0] + eps) {
-                return {{first, second}};
-            } else {
-                return std::nullopt;
+
+            for (size_t i = 0; i < 2; i++) {
+                if (first[i] > second[i]) {
+                    return std::nullopt;
+                }
             }
+
+            return LineSegment(first, second);
         };
 
     public:
@@ -59,12 +62,46 @@ namespace popup {
             }
         }
 
+        LineSegment(const LineSegment &other) {
+            start_ = other.start_;
+            end_ = other.end_;
+
+            if (other.min_ == &other.start_) {
+                min_ = &start_;
+                max_ = &end_;
+            } else {
+                min_ = &end_;
+                max_ = &start_;
+            }
+        }
+
+        LineSegment(LineSegment &&other) {
+            start_ = other.start_;
+            end_ = other.end_;
+
+            if (other.min_ == &other.start_) {
+                min_ = &start_;
+                max_ = &end_;
+            } else {
+                min_ = &end_;
+                max_ = &start_;
+            }
+        }
+
         Point<2, T> start() {
             return start_;
         }
 
         Point<2, T> end() {
             return end_;
+        }
+
+        Point<2, T>& min_point() {
+            return *min_;
+        }
+
+        Point<2, T>& max_point() {
+            return *max_;
         }
         /**
          * Return the length of the line segment.
@@ -157,28 +194,13 @@ namespace popup {
                     return {IntersectionType::PointIntersect
                             , other};
                 }
-                // auto k1 = (start_[1] - end_[1]) / (start_[0] - end_[0]);
-                // if (std::abs(start_[0] - end_[0]) < eps) {
-                //     k1 = 0.0;
-                // }
-                // auto k2 = (other.start_[1] - other.end_[1]) / (other.start_[0] - other.end_[0]);
-                // if (std::abs(other.start_[0] - other.end_[0]) < eps) {
-                //     k2 = 0.0;
-                // }
-                // auto m1 = end_[1] - end_[0] * k1;
-                // auto m2 = other.end_[1] - other.end_[0] * k2;
-                // auto x = (m2 - m1) / (k1 - k2);
-                // if (std::abs(k1 - k2) < eps) {
-                //     x = 0.0;
-                // }
-                // auto y = k1 * x + m1;
-
-                auto t = ((start_[0] - other.start_[0]) * (other.start_[1] - other.end_[1]) - (start_[1] - other.start_[1]) * (other.start_[0] - other.end_[0]))
-                    / ((start_[0] - end_[0])*(other.start_[1]-other.end_[1]) - (start_[1] - end_[1]) * (other.start_[0] - other.end_[0]));
-                //auto u = -((start_[0] - end_[0])*(start_[1] - other.start_[1]) - (start_[1] - end_[1]) * (start_[0] - other.start_[0])) / ((start_[0] - end_[0]) * (other.start_[1] - other.end_[1]) - (start_[1] - end_[1]) * (other.start_[0] - other.end_[0]));
+                auto t = ((start_[0] - other.start_[0]) * (other.start_[1] - other.end_[1]) 
+                        - (start_[1] - other.start_[1]) * (other.start_[0] - other.end_[0]))
+                        / ((start_[0] - end_[0])*(other.start_[1]-other.end_[1]) 
+                        - (start_[1] - end_[1]) * (other.start_[0] - other.end_[0]));
                 Point<2,T> point = {{ start_[0] + t * (end_[0] - start_[0])
                                       , start_[1] + t * (end_[1] - start_[1])}};
-                if (contains_point(point)) {
+                if (contains_point(point) && other.contains_point(point)) {
                     return {IntersectionType::PointIntersect
                             , LineSegment(point, point)};
                 }

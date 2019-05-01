@@ -32,8 +32,10 @@ int main() {
           cout << "none\n";
           break;
       case IntersectionType::SegmentIntersect:
-          cout << ans.second.start()[0] << " " << ans.second.start()[1] << " "
-               << ans.second.end()[0] << " " << ans.second.end()[1] << "\n";
+          // cout << ans.second.start()[0] << " " << ans.second.start()[1] << " "
+          //      << ans.second.end()[0] << " " << ans.second.end()[1] << "\n";
+          cout << ans.second.min_point()[0] << " " << ans.second.min_point()[1] << " "
+              << ans.second.max_point()[0] << " " << ans.second.max_point()[1] << "\n";
           break;
       case IntersectionType::PointIntersect:
           cout << ans.second.start()[0] << " "
