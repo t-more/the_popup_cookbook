@@ -27,10 +27,12 @@ namespace popup {
          * This method assumes that this object and the other passed as argument
          * are colinear. Will return a line segment containting the overlap
          */
-        std::optional<LineSegment> interval_overlap(const LineSegment& other) const {
+        std::optional<LineSegment> interval_overlap(
+                const LineSegment& other,
+                T eps = 1e-9) const {
             auto first = max_dim<0>(*min_, *other.min_);
             auto second = min_dim<0>(*max_, *other.max_);
-            if (first[0] < second[0]) {
+            if (first[0] <= second[0] + eps) {
                 return {{first, second}};
             } else {
                 return std::nullopt;
@@ -46,8 +48,8 @@ namespace popup {
             start_ = a;
             end_ = b;
 
-            min_ = &start_;
-            max_ = &end_;
+            min_ = &end_;
+            max_ = &start_;
             for (size_t i = 0; i < 2; i++) {
                 if (a[i] < b[i]) {
                     min_ = &start_;
@@ -55,7 +57,6 @@ namespace popup {
                     break;
                 }
             }
-
         }
 
         Point<2, T> start() {
