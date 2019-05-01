@@ -46,6 +46,8 @@ namespace popup {
             start_ = a;
             end_ = b;
 
+            min_ = &start_;
+            max_ = &end_;
             for (size_t i = 0; i < 2; i++) {
                 if (a[i] < b[i]) {
                     min_ = &start_;
