@@ -118,16 +118,16 @@ namespace popup {
 
     template<typename T, typename RAItr>
     PointLocation point_in_polygon(const Vec2<T>& point, RAItr begin, RAItr end) {
-        const T EPS = 1e-9;
+        const T EPS = 1e-15;
         double angle_sum = 0;
         auto prev = *begin;
         auto it = begin;
         it++;
         for (; it != end; it++) {
             double cross_angle =
-                cross(it->normalized() - point, prev.normalized() - point);
+                cross((*it - point).normalized(), (prev - point).normalized());
             double dot_angle =
-                (it->normalized() - point).dot(prev.normalized() - point);
+                (*it - point).normalized().dot((prev - point).normalized());
             angle_sum += std::atan2(cross_angle, dot_angle);
             if (point_on_line(point, prev, *it)) {
                 return PointLocation::Border;
@@ -136,9 +136,9 @@ namespace popup {
         }
 
         double cross_angle =
-            cross(it->normalized() - point, prev.normalized() - point);
+            cross((*begin - point).normalized(), (prev - point).normalized());
         double dot_angle =
-            (it->normalized() - point).dot(prev.normalized() - point);
+            (*begin - point).normalized().dot((prev - point).normalized());
         angle_sum += std::atan2(cross_angle, dot_angle);
         if (point_on_line(point,  prev, *begin)) {
             return PointLocation::Border;
