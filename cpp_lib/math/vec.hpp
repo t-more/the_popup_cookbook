@@ -4,6 +4,8 @@
 #include <cstring>
 #include <array>
 
+#include <iostream>
+
 namespace popup {
     const double PI = 3.1415926535897932384626433;
 
@@ -259,11 +261,22 @@ namespace popup {
         /**
          * Gives the deteerminant of two vectors together with the 1 vector
          */
+        T det(const Vec<2, T>& other) {
+            T res = T();
+            for (size_t i = 1; i < dim(); i++) {
+                res += (*this)[i % dim()] * other[(i + 1) % dim()];
+                res -= (*this)[i % dim()] * other[(i - 1) % dim()];
+            }
+            res += (*this)[i % dim()] * other[(i + 1) % dim()];
+            res -= (*this)[i % dim()] * other[(i - 1) % dim()];
+            return res;
+        }
         T det(const Vec<Dim, T>& other) {
             T res = T();
             for (size_t i = 1; i < dim(); i++) {
                 res += (*this)[i % dim()] * other[(i + 1) % dim()];
                 res -= (*this)[i % dim()] * other[(i - 1) % dim()];
+
             }
             return res;
         }
@@ -439,6 +452,12 @@ namespace popup {
     using Vec3 = Vec<3, T>;
 
     template<typename T>
+    using Point2 = Point<2, T>;
+
+    template<typename T>
+    using Point3 = Point<3, T>;
+
+    template<typename T>
     Vec<3, T> cross(const Vec<3, T>& a,  const Vec<3, T>& b) {
         return {
                 a[1] * b[2] - a[2] * b[1],
@@ -485,7 +504,7 @@ namespace popup {
     }
 
     template <unsigned int Comp, unsigned int Dim, typename T>
-    Vec<Dim,T>& max_dim(const Vec<Dim,T>& a, const Vec<Dim,T>& b) {
+    Point<Dim,T>& max_dim(const Point<Dim,T>& a, const Point<Dim,T>& b) {
         if (a[Comp] < b[Comp]) {
             return b;
         } else {
@@ -494,11 +513,21 @@ namespace popup {
     }
 
     template <unsigned int Comp, unsigned int Dim, typename T>
-    Vec<Dim,T>& min_dim(const Vec<Dim,T>& a, const Vec<Dim,T>& b) {
+    Point<Dim,T>& min_dim(const Point<Dim,T>& a, const Point<Dim,T>& b) {
         if (a[Comp] < b[Comp]) {
             return a;
         } else {
             return b;
         }
+    }
+
+    template <unsigned int Comp, unsigned int Dim, typename T>
+    Vec<Dim,T>& max_dim(const Vec<Dim,T>& a, const Vec<Dim,T>& b) {
+        return max_dim<Comp>(a.point_, b.point_);
+    }
+
+    template <unsigned int Comp, unsigned int Dim, typename T>
+    Vec<Dim,T>& min_dim(const Vec<Dim,T>& a, const Vec<Dim,T>& b) {
+        return min_dim<Comp>(a.point_, b.point_);
     }
 } // namespace popup
