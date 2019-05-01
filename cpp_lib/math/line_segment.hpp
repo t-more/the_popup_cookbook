@@ -83,6 +83,7 @@ namespace popup {
                     if (ce > de) std::swap(ce, de);
                     return std::max(ae, ce) <= std::min(be, de);
                 };
+
             for (size_t i = 0; i < 2; i++) {
                 auto insertects_in_dim = interval_intersects_1d(
                     start_[i],
@@ -138,7 +139,7 @@ namespace popup {
                                 , overlap};
                     }
                 }
-            } else if (intersects(other)) {
+            } else if (!parallel(other) && intersects(other)) {
                 if (start_.comparable(end_)) {
                     return {IntersectionType::PointIntersect
                             , *this};
@@ -146,23 +147,29 @@ namespace popup {
                     return {IntersectionType::PointIntersect
                             , other};
                 }
-                auto k1 = (start_[1] - end_[1]) / (start_[0] - end_[0]);
-                if (std::abs(start_[0] - end_[0]) < eps) {
-                    k1 = 0.0;
-                }
-                auto k2 = (other.start_[1] - other.end_[1]) / (other.start_[0] - other.end_[0]);
-                if (std::abs(other.start_[0] - other.end_[0]) < eps) {
-                    k2 = 0.0;
-                }
-                auto m1 = end_[1] - end_[0] * k1;
-                auto m2 = other.end_[1] - other.end_[0] * k2;
-                auto x = (m2 - m1) / (k1 - k2);
-                if (std::abs(k1 - k2) < eps) {
-                    x = 0.0;
-                }
-                auto y = k1 * x + m1;
+                // auto k1 = (start_[1] - end_[1]) / (start_[0] - end_[0]);
+                // if (std::abs(start_[0] - end_[0]) < eps) {
+                //     k1 = 0.0;
+                // }
+                // auto k2 = (other.start_[1] - other.end_[1]) / (other.start_[0] - other.end_[0]);
+                // if (std::abs(other.start_[0] - other.end_[0]) < eps) {
+                //     k2 = 0.0;
+                // }
+                // auto m1 = end_[1] - end_[0] * k1;
+                // auto m2 = other.end_[1] - other.end_[0] * k2;
+                // auto x = (m2 - m1) / (k1 - k2);
+                // if (std::abs(k1 - k2) < eps) {
+                //     x = 0.0;
+                // }
+                // auto y = k1 * x + m1;
+
+                auto t = ((start_[0] - other.start_[0]) * (other.start_[1] - other.end_[1]) - (start_[1] - other.start_[1]) * (other.start_[0] - other.end_[0]))
+                    / ((start_[0] - end_[0])*(other.start_[1]-other.end_[1]) - (start_[1] - end_[1]) * (other.start_[0] - other.end_[0]));
+                //auto u = -((start_[0] - end_[0])*(start_[1] - other.start_[1]) - (start_[1] - end_[1]) * (start_[0] - other.start_[0])) / ((start_[0] - end_[0]) * (other.start_[1] - other.end_[1]) - (start_[1] - end_[1]) * (other.start_[0] - other.end_[0]));
+                Point<2,T> point = {{ start_[0] + t * (end_[0] - start_[0])
+                                      , start_[1] + t * (end_[1] - start_[1])}};
                 return {IntersectionType::PointIntersect
-                        , LineSegment({{x,y}}, {{x,y}})};
+                        , LineSegment(point, point)};
             }
             return {IntersectionType::None
                     , LineSegment<T>()};
