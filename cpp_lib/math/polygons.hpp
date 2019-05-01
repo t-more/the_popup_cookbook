@@ -117,6 +117,10 @@ namespace popup {
         Inside
     };
 
+    /**
+     *  Check whether a point is inside, outside or on the border
+     *  of a simple polygon using winding numbers.
+     */
     template<typename T, typename RAItr>
     PointLocation point_in_polygon(const Vec2<T>& point, RAItr begin, RAItr end) {
         const T EPS = 1e-0;
