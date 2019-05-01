@@ -261,16 +261,6 @@ namespace popup {
         /**
          * Gives the deteerminant of two vectors together with the 1 vector
          */
-        T det(const Vec<2, T>& other) {
-            T res = T();
-            for (size_t i = 1; i < dim(); i++) {
-                res += (*this)[i % dim()] * other[(i + 1) % dim()];
-                res -= (*this)[i % dim()] * other[(i - 1) % dim()];
-            }
-            res += (*this)[i % dim()] * other[(i + 1) % dim()];
-            res -= (*this)[i % dim()] * other[(i - 1) % dim()];
-            return res;
-        }
         T det(const Vec<Dim, T>& other) {
             T res = T();
             for (size_t i = 1; i < dim(); i++) {

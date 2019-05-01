@@ -85,7 +85,7 @@ namespace popup {
     bool point_on_line(const Vec2<T>& point, Vec2<T> l1, Vec2<T> l2) {
         const double EPS = 1e-9;
         if (l2[0] < l1[0]) std::swap(l1, l2);
-        return (l1[0] <= point[0] && point[0] < l2[0])
+        return (l1[0] <= point[0] && point[0] <= l2[0])
             && (std::abs(cross(point - l1, l2 - l1)) < EPS);
     }
 
