@@ -258,6 +258,10 @@ namespace popup {
             return point_;
         }
 
+        const Point<Dim,T>& point() const {
+            return point_;
+        }
+
         /**
          * Gives the deteerminant of two vectors together with the 1 vector
          */

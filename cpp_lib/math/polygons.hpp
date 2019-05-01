@@ -83,7 +83,7 @@ namespace popup {
 
     template<typename T>
     bool point_on_line(const Vec2<T>& point, Vec2<T> l1, Vec2<T> l2) {
-        const double EPS = 1e-15;
+        const double EPS = 1e-9;
         double len1 = (point - l1).norm();
         double len2 = (point - l2).norm();
         double total_len = (l1 - l2).norm();
