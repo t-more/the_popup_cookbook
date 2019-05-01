@@ -121,7 +121,7 @@ namespace popup {
 
     template<typename T, typename RAItr>
     PointLocation point_in_polygon(const Vec2<T>& point, RAItr begin, RAItr end) {
-        const T EPS = 1e-15;
+        const T EPS = 1e-0;
         double angle_sum = 0;
         auto prev = *begin;
         auto it = begin;
