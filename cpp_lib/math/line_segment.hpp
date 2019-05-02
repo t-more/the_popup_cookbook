@@ -88,6 +88,18 @@ namespace popup {
             }
         }
 
+        void operator=(const LineSegment& other) {
+            start_ = other.start_;
+            end_ = other.end_;
+            if (other.min_ == &other.start_) {
+                min_ = &start_;
+                max_ = &end_;
+            } else {
+                min_ = &end_;
+                max_ = &start_;
+            }
+        }
+
         Point<2, T> start() const {
             return start_;
         }
@@ -111,6 +123,12 @@ namespace popup {
         Point<2, T> max_point() {
             return *max_;
         }
+
+
+        bool operator<(const LineSegment& other) {
+            return *min_ < *other.min_;
+        }
+
         /**
          * Return the length of the line segment.
          */
@@ -161,7 +179,7 @@ namespace popup {
                 return (int)(T(0) < n) - (int)(n < T(0));
             };
 
-            auto a = Vec(start_),       b = Vec(end_), 
+            auto a = Vec(start_),       b = Vec(end_),
                  c = Vec(other.start_), d = Vec(other.end_);
 
             bool f = (sign(cross(b-a, c-a)) != sign(cross(b-a, d-a)));
