@@ -130,28 +130,40 @@ namespace popup {
             return (std::abs(len1+len2-total_len) < eps);
         }
 
-
         /**
-         *
+         * Checks if infinite line intersects
          */
-        bool intersects(const LineSegment &other) const {
-            const auto interval_intersects_1d =
-                [](T ae, T be, T ce, T de) {
-                    if (ae > be) std::swap(ae, be);
-                    if (ce > de) std::swap(ce, de);
-                    return std::max(ae, ce) <= std::min(be, de);
-                };
+        // bool intersects(const LineSegment &other) const {
+        //     const auto interval_intersects_1d =
+        //         [](T ae, T be, T ce, T de) {
+        //             if (ae > be) std::swap(ae, be);
+        //             if (ce > de) std::swap(ce, de);
+        //             return std::max(ae, ce) <= std::min(be, de);
+        //         };
 
-            for (size_t i = 0; i < 2; i++) {
-                auto insertects_in_dim = interval_intersects_1d(
-                    start_[i],
-                    end_[i],
-                    other.start_[i],
-                    other.end_[i]);
-                if (!insertects_in_dim) return false;
+        //     for (size_t i = 0; i < 2; i++) {
+        //         auto insertects_in_dim = interval_intersects_1d(
+        //             start_[i],
+        //             end_[i],
+        //             other.start_[i],
+        //             other.end_[i]);
+        //         if (!insertects_in_dim) return false;
+        //     }
+        //     return true;
+        // };
+
+        bool line_intersects(const LineSegment& other, T eps = 1e-15) const {
+            if (colinear(other)) {
+                return  interval_overlap(other).has_value();
             }
-            return true;
-        };
+            const auto sign = [](const T n){
+                                  return (int)(T(0) < n) - (int)(n < T(0));
+                              };
+            return (sign(cross(Vec(end_ - start_), Vec(other.end_ - start_)) !=
+                         sign(cross(Vec(end_ - start_), Vec(other.start_ - start_)))))
+                && (sign(cross(Vec(other.end_ - other.start_), Vec(start_ - other.start_))) !=
+                    sign(cross(Vec(other.end_ - other.start_), Vec(end_ - other.start_))));
+        }
 
         /**
          * Returns true if the two line segments are colinear.
@@ -164,10 +176,6 @@ namespace popup {
             Vec<2, T> v3;
             if (*other.max_ < *max_) {
                 v3 = Vec<2, T>(*max_ - *other.min_);
-                // std::cout << Vec(v3) << std::endl;
-                // std::cout << Vec(*max_) << std::endl;
-                // std::cout << Vec(*other.max_) << std::endl;
-                // std::cout << Vec(*max_ - *other.max_) << std::endl;
             } else {
                 v3 = Vec<2, T>(*other.max_ - *min_);
             }
@@ -250,6 +258,39 @@ namespace popup {
 
         };
 
+        T distance_to(const Point<2, T>& point) const {
+            if (contains_point(point)) {
+                return T();
+            }
+
+            auto p_vec = Vec(point - *min_);
+            auto l_vec = Vec(*max_ - *min_);
+            T l_vec_len = l_vec.norm();
+            T scalar_proj = p_vec.scalar_projection_on(l_vec);
+            if (0 <= scalar_proj && scalar_proj <= l_vec_len) {
+                // std::cerr << scalar_proj << " * " <<
+                //     l_vec.normalized() << " = " <<
+                //     scalar_proj*(l_vec.normalized())<< std::endl;
+                return (p_vec - scalar_proj * l_vec.normalized()).norm();
+            } else {
+                return std::min(start_.distance_to(point), end_.distance_to(point));
+            }
+        }
+
+        T distance_to(const LineSegment& other) const {
+            if (is_point()) {
+                return other.distance_to(start_);
+            } else if (other.is_point()) {
+                return distance_to(other.start_);
+            } else if (line_intersects(other)) {
+                return T();
+            } else {
+                return std::min(std::min(other.distance_to(start_),
+                                         other.distance_to(end_)),
+                                std::min(distance_to(other.start_),
+                                         distance_to(other.end_)));
+            }
+        }
     };
 
 }

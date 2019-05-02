@@ -17,7 +17,7 @@ namespace popup {
             std::fill(vec_, vec_+Dim, 0);
         }
         Point(const T e) {
-            vec_ = {e};
+            std::fill(vec_, vec_+Dim, e);
         }
 
         Point(const T init[Dim]) {
@@ -146,7 +146,7 @@ namespace popup {
         // Multiplication
         void operator*=(const Point<Dim, T>& other) {
             auto it = other.cbegin();
-            for (auto& e : this) {
+            for (auto& e : *this) {
                 e = *(it++) * e;
             }
         }
@@ -165,7 +165,7 @@ namespace popup {
 
         friend Point<Dim, T> operator*(const T& lhs, const Point<Dim, T>& rhs) {
             auto res = Point(lhs);
-            res /= rhs;
+            res *= rhs;
             return res;
         }
 
@@ -411,11 +411,15 @@ namespace popup {
         }
 
         T norm() const {
+            return std::sqrt(norm_square());
+        }
+
+        T norm_square() const {
             T res = T();
             for (const auto &  e  : *this) {
                 res += e * e;
             }
-            return std::sqrt(res);
+            return res;
         }
 
         /**
@@ -434,6 +438,14 @@ namespace popup {
 
         bool comparable(const Vec<Dim, T>& other, const T epsilon = 1e-9) const {
             return point_.comparable(other.point_, epsilon);
+        }
+
+        Vec<Dim, T> projected_on(const Vec<Dim, T>& other) {
+            return dot(other) / other.norm_square();
+        }
+
+        T scalar_projection_on(const Vec<Dim, T>& other) {
+            return dot(other.normalized());
         }
 
     };
@@ -475,6 +487,7 @@ namespace popup {
         }
         return res;
     }
+
 
     template<typename T>
     Vec2<T> vec2(const T p1, const T p2){
