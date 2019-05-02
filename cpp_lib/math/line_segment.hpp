@@ -156,13 +156,18 @@ namespace popup {
             if (colinear(other)) {
                 return  interval_overlap(other).has_value();
             }
+
             const auto sign = [](const T n){
-                                  return (int)(T(0) < n) - (int)(n < T(0));
-                              };
-            return (sign(cross(Vec(end_ - start_), Vec(other.end_ - start_)) !=
-                         sign(cross(Vec(end_ - start_), Vec(other.start_ - start_)))))
-                && (sign(cross(Vec(other.end_ - other.start_), Vec(start_ - other.start_))) !=
-                    sign(cross(Vec(other.end_ - other.start_), Vec(end_ - other.start_))));
+                return (int)(T(0) < n) - (int)(n < T(0));
+            };
+
+            auto a = Vec(start_),       b = Vec(end_), 
+                 c = Vec(other.start_), d = Vec(other.end_);
+
+            bool f = (sign(cross(b-a, c-a)) != sign(cross(b-a, d-a)));
+            bool s = (sign(cross(d-c, a-c)) != sign(cross(d-c, b-c)));
+            // std::cerr << f << " " << s << std::endl;
+            return (f && s);
         }
 
         /**
