@@ -159,10 +159,21 @@ namespace popup {
             const auto sign = [](const T n){
                                   return (int)(T(0) < n) - (int)(n < T(0));
                               };
-            return (sign(cross(Vec(end_ - start_), Vec(other.end_ - start_)) !=
-                         sign(cross(Vec(end_ - start_), Vec(other.start_ - start_)))))
-                && (sign(cross(Vec(other.end_ - other.start_), Vec(start_ - other.start_))) !=
-                    sign(cross(Vec(other.end_ - other.start_), Vec(end_ - other.start_))));
+            const auto local_cross =
+                [](const Vec<2, T>& a, const Vec<2, T>& b, const Vec<2, T>& c) {
+                    auto v1 = Vec(b - a);
+                    auto v2 = Vec(c - a);
+                    return cross(v1, v2);
+                };
+
+            bool f = sign(local_cross(*min_, *max_, *other.min_) !=
+                     sign(local_cross(*min_, *max_, *other.max_)));
+            bool g = sign(local_cross(*other.min_, *other.max_, *min_)) !=
+                     sign(local_cross(*other.min_, *other.max_, *max_));
+            std::cerr << f << " " << g << std::endl;
+            return f && g;
+
+
         }
 
         /**
