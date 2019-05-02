@@ -225,7 +225,6 @@ namespace popup {
                 }
 
             } else if (intersects(other)) {
-                std::cerr << "HERE\n";
                 if (start_.comparable(end_)) {
                     return {IntersectionType::PointIntersect
                             , *this};
