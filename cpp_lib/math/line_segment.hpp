@@ -53,6 +53,7 @@ namespace popup {
             min_ = &end_;
             max_ = &start_;
             for (size_t i = 0; i < 2; i++) {
+                if (b[i] < a[i]) break;
                 if (a[i] < b[i]) {
                     min_ = &start_;
                     max_ = &end_;
@@ -171,7 +172,6 @@ namespace popup {
                 v3 = Vec<2, T>(*other.max_ - *min_);
             }
             v3.normalize();
-            //std::cerr << Vec(v1) << " " << Vec(v2) << " " << Vec(v3) << std::endl;
             return v1.comparable(v2) && v3.comparable(v1);
         }
 
