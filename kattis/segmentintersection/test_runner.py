@@ -5,8 +5,8 @@ test_str = ''
 cnt = 0
 tcnt = 0
 
-start_v = -10
-end_v = 10
+start_v = -2
+end_v = 2
 p1 = start_v
 p2 = start_v
 p3 = start_v
@@ -28,6 +28,7 @@ while same:
 
     proc1 = subprocess.Popen('./main.out', stdin=read, stdout=subprocess.PIPE)
     proc1_str = proc1.stdout.read()
+    os.close(read)
 
     read, write = os.pipe()
     os.write(write, str.encode(test_str))
@@ -35,6 +36,7 @@ while same:
 
     proc2 = subprocess.Popen('./working.out', stdin=read, stdout=subprocess.PIPE)
     proc2_str = proc2.stdout.read()
+    os.close(read)
 
     cnt = cnt + 1
     if cnt == 1000:
