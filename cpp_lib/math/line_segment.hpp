@@ -23,6 +23,7 @@ namespace popup {
         // Contains info about with of start and end has the largest x value.
         Point<2, T>* min_;
         Point<2, T>* max_;
+
         /**
          * This method assumes that this object and the other passed as argument
          * are colinear. Will return a line segment containting the overlap
@@ -30,11 +31,16 @@ namespace popup {
         std::optional<LineSegment> interval_overlap(
                 const LineSegment& other,
                 T eps = 1e-9) const {
+
             auto first = std::max(*min_, *other.min_);
             auto second = std::min(*max_, *other.max_);
-
+            auto intersect_1d = [](T a, T b, T c, T d) -> bool {
+                if (a > b) std::swap(a, b);
+                if (c > d) std::swap(c, d);
+                return std::max(a, c) <= std::min(b, d);
+            };
             for (size_t i = 0; i < 2; i++) {
-                if (first[i] > second[i]) {
+                if (!intersect_1d(start()[i], end()[i], other.start()[i], other.end()[i])) {
                     return std::nullopt;
                 }
             }
