@@ -123,7 +123,7 @@ namespace popup {
             return start_.comparable(end_);
         }
 
-        bool contains_point(const Point<2, T>& point, T eps = 1e-2) const {
+        bool contains_point(const Point<2, T>& point, T eps = 1e-9) const {
             T len1 = point.distance_to(start_);
             T len2 = point.distance_to(end_);
             T total_len = start_.distance_to(end_);
@@ -210,9 +210,7 @@ namespace popup {
                     return {IntersectionType::None
                             , LineSegment()};
                 }
-            }
-
-            if (colinear(other)) {
+            } else if (colinear(other)) {
                 auto opt_overlap = interval_overlap(other);
 
                 if (opt_overlap.has_value()) {
@@ -227,6 +225,7 @@ namespace popup {
                 }
 
             } else if (intersects(other)) {
+                std::cerr << "HERE\n";
                 if (start_.comparable(end_)) {
                     return {IntersectionType::PointIntersect
                             , *this};
