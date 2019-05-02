@@ -34,18 +34,11 @@ namespace popup {
 
             auto first = std::max(*min_, *other.min_);
             auto second = std::min(*max_, *other.max_);
-            auto intersect_1d = [](T a, T b, T c, T d) -> bool {
-                if (a > b) std::swap(a, b);
-                if (c > d) std::swap(c, d);
-                return std::max(a, c) <= std::min(b, d);
-            };
-            for (size_t i = 0; i < 2; i++) {
-                if (!intersect_1d(start()[i], end()[i], other.start()[i], other.end()[i])) {
-                    return std::nullopt;
-                }
+            if (first < second || first.comparable(second)) {
+                return LineSegment(first, second);
+            } else {
+                return std::nullopt;
             }
-
-            return LineSegment(first, second);
         };
 
     public:
@@ -125,6 +118,10 @@ namespace popup {
         }
 
 
+        bool is_point() const {
+            return start_.comparable(end_);
+        }
+
         bool contains_point(const Point<2, T>& point, T eps = 1e-2) const {
             T len1 = point.distance_to(start_);
             T len2 = point.distance_to(end_);
@@ -165,7 +162,7 @@ namespace popup {
             v2.normalize();
             Vec<2, T> v3;
             if (*other.max_ < *max_) {
-                v3 = Vec<2, T>(*max_ - *other.max_);
+                v3 = Vec<2, T>(*max_ - *other.min_);
                 // std::cout << Vec(v3) << std::endl;
                 // std::cout << Vec(*max_) << std::endl;
                 // std::cout << Vec(*other.max_) << std::endl;
@@ -174,7 +171,7 @@ namespace popup {
                 v3 = Vec<2, T>(*other.max_ - *min_);
             }
             v3.normalize();
-            //            std::cerr << Vec(v1) << " " << Vec(v2) << " " << Vec(v3) << std::endl;
+            //std::cerr << Vec(v1) << " " << Vec(v2) << " " << Vec(v3) << std::endl;
             return v1.comparable(v2) && v3.comparable(v1);
         }
 
@@ -194,8 +191,30 @@ namespace popup {
          *
          */
         std::pair<IntersectionType, LineSegment> intersection(const LineSegment &other, double eps = 1e-9) const {
+            // Just in case stuff, try remove of nothing works
+            if (is_point() && other.is_point()) {
+                if (start_.comparable(other.start_)) {
+                    return {IntersectionType::PointIntersect
+                            , LineSegment(start_, start_)};
+                } else {
+                    return {IntersectionType::None
+                            , LineSegment()};
+                }
+            } else if (is_point() || other.is_point()) {
+                auto& point = is_point() ? start_ : other.start_;
+                auto& line =  is_point() ? other : *this;
+                if (line.contains_point(point)) {
+                    return {IntersectionType::PointIntersect
+                            , LineSegment(point, point)};
+                } else {
+                    return {IntersectionType::None
+                            , LineSegment()};
+                }
+            }
+
             if (colinear(other)) {
                 auto opt_overlap = interval_overlap(other);
+
                 if (opt_overlap.has_value()) {
                     auto& overlap = opt_overlap.value();
                     if (overlap.start_.comparable(overlap.end_)) {
@@ -208,7 +227,6 @@ namespace popup {
                 }
 
             } else if (intersects(other)) {
-
                 if (start_.comparable(end_)) {
                     return {IntersectionType::PointIntersect
                             , *this};

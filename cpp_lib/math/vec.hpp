@@ -514,6 +514,24 @@ namespace popup {
         }
     }
 
+    template <unsigned int Dim, typename T>
+    Point<Dim,T>& max_dim(size_t comp, Point<Dim,T>& a, Point<Dim,T>& b) {
+        if (a[comp] < b[comp]) {
+            return b;
+        } else {
+            return a;
+        }
+    }
+
+    template <unsigned int Dim, typename T>
+    Point<Dim,T>& min_dim(size_t comp, Point<Dim,T>& a, Point<Dim,T>& b) {
+        if (a[comp] < b[comp]) {
+            return a;
+        } else {
+            return b;
+        }
+    }
+
     template <unsigned int Comp, unsigned int Dim, typename T>
     Vec<Dim,T>& max_dim(Vec<Dim,T>& a, Vec<Dim,T>& b) {
         return max_dim<Comp>(a.point_, b.point_);
