@@ -33,7 +33,7 @@ namespace popup {
 
         for (auto itr = begin+1; itr != end; itr++) {
 
-            if (*itr == *(itr -1)) {
+            if (*itr == lower_hull.back() || *itr == upper_hull.back()) {
                 continue;
             }
 
