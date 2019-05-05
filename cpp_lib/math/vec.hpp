@@ -79,6 +79,9 @@ namespace popup {
             return at(i);
         }
 
+
+
+
         // Addition
         void operator+=(const Point<Dim, T>& other) {
             auto it = other.cbegin();
@@ -229,6 +232,15 @@ namespace popup {
             return true;
         }
 
+        bool operator==(const Point<Dim, T>& other) {
+            for (size_t i = 0; i < dim(); i++) {
+                if (at(i) != other.at(i)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         bool operator<(const Point<Dim, T>& other) const {
             for (size_t i = 0; i < dim(); i++) {
                 if (at(i) < other.at(i)) {
@@ -236,6 +248,19 @@ namespace popup {
                 }
             }
             return false;
+        }
+
+        friend std::ostream& operator<<(std::ostream& out, const Point<Dim, T> &point) {
+            out << "[";
+            for(size_t i = 0; i < point.dim(); i++) {
+                if (i+1 != point.dim()) {
+                    out << point[i] << ", ";
+                } else {
+                    out << point[i];
+                }
+            }
+            out << "]";
+            return out;
         }
 
     };
@@ -496,17 +521,7 @@ namespace popup {
 
     template <unsigned int Dim, typename T>
     std::ostream& operator<<(std::ostream& out, const Vec<Dim, T> &vec) {
-        out << "[";
-        for(size_t i = 0; i < Dim; i++) {
-            if (i+1 != Dim) {
-                out << vec[i] << ", ";
-            } else {
-                out << vec[i];
-            }
-        }
-        out << "]";
-
-        return out;
+        return out << vec.point_;
     }
 
     template <unsigned int Comp, unsigned int Dim, typename T>
