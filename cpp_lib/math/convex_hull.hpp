@@ -1,18 +1,41 @@
+// Author: Marcus Östling, Tomas Möre
+#pragma once
 #include <vector>
 #include "vec.hpp"
+#include "point.hpp"
 
 namespace popup {
 
+    /**
+     *  Returns if b is to the left of c.
+     *  
+     *  O(1)
+     */
     template <typename T>
     bool ccw_turn(Point<2, T> a, Point<2, T> b, Point<2, T> c) {
         return cross(Vec2<T>(c-a), Vec2<T>(b-a)) < 0;
     }
 
+    /**
+     *  Returns if b is to the right of c.
+     *  
+     *  O(1)
+     */
     template <typename T>
     bool cw_turn(Point<2, T> a, Point<2, T> b, Point<2, T> c) {
         return cross(Vec2<T>(c-a), Vec2<T>(b-a)) > 0;
     }
 
+    /**
+     * Given iterators begin and end to a container of points,
+     * calculates the convex hull.
+     *
+     * The algorithm divides the hull into a lower and a upper hull
+     * and finds these hulls seperately. Finally, it combines
+     * the both hulls into the complete convex hull.
+     *
+     * O(nlogn), due to sorting.
+     */
     template <typename T, typename RAitr>
     std::vector<Point<2, T>> convex_hull(RAitr begin, RAitr end) {
         const auto cmp =

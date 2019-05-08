@@ -1,5 +1,8 @@
+// Author Marcus Östling, Tomas Möre
 #pragma once
-#include "./vec.hpp"
+#include "vec.hpp"
+#include "point.hpp"
+#include "line_segment.hpp"
 
 #include <cassert>
 #include <utility>
@@ -7,20 +10,9 @@
 #include <limits>
 
 namespace popup {
-
-    template <unsigned int Dim, typename T>
-    class LineSegment {
-
-    };
-
-    template <typename T>
-    int sign(T n) {
-        return (int)(T(0) < n) - (int)(n < T(0));
-    }
-
     enum ClockOrder {
-                     CW,
-                     CCW
+        CW,
+        CCW
     };
 
     std::ostream& operator<<(std::ostream& os, ClockOrder o) {
@@ -35,80 +27,34 @@ namespace popup {
         return os;
     }
 
+    /**
+     *  Given iterators begin and end to a container of points,
+     *  calculate the area of a simple polygon and whether
+     *  the polygon is given clockwise or counter-clockwise.
+     *
+     *  O(n)
+     */
     template<typename T, typename RAItr>
-    std::pair<ClockOrder, T> identify_order(RAItr begin, RAItr end) {
+    std::pair<ClockOrder, T> polygon_order_area(RAItr begin, RAItr end) {
         assert((end - begin) >= 3);
 
         T sum = T();
         auto itr = begin;
         Vec2<T> first = *begin;
-
-        Vec2<T> last = *begin;
+        Vec2<T> prev = *begin;
         itr++;
+
         while (itr != end) {
-            Vec2<T>& current = *(itr++);
-            sum += (last[0] - current[0]) * (last[1] + current[1]);
-            last = current;
+            Vec2<T> current = *(itr++);
+            sum += cross(current - first, prev - first);
+            prev = current;
         }
-        sum += (last[0] - first[0]) * (last[1] + first[1]);
         sum /= 2.0;
-        return {sum > 0 ? ClockOrder::CCW : ClockOrder::CW
-                , std::abs(sum)};
-    }
-
-    template<typename T>
-    bool interval_intersects_1d(T ae, T be, T ce, T de) {
-        if (ae > be) std::swap(ae, be);
-        if (ce > de) std::swap(ce, de);
-        return std::max(ae, ce) <= std::min(be, de);
-    };
-
-    template<unsigned int Dim, typename T>
-    bool interval_intersects(
-        const Vec<Dim, T> &l1_begin,
-        const Vec<Dim, T> &l1_end,
-        const Vec<Dim, T> &l2_begin,
-        const Vec<Dim, T> &l2_end
-    ) {
-        for (size_t i = 0; i < Dim; i++) {
-            auto insertects_in_dim = interval_intersects_1d(
-                l1_begin[i],
-                l1_end[i],
-                l2_begin[i],
-                l2_end[i]);
-            if (!insertects_in_dim) return false;
-        }
-        return true;
-    };
-
-    template<typename T>
-    bool point_on_line(const Vec2<T>& point, Vec2<T> l1, Vec2<T> l2) {
-        const double EPS = 1e-9;
-        double len1 = (point - l1).norm();
-        double len2 = (point - l2).norm();
-        double total_len = (l1 - l2).norm();
-        return (std::abs(len1+len2-total_len) < EPS);
-    }
-
-    template<typename T>
-    bool line_intersect(
-            const Vec2<T> &l1_begin,
-            const Vec2<T> &l1_end,
-            const Vec2<T> &l2_begin,
-            const Vec2<T> &l2_end) {
-        const T EPS = 1e-15;
-        if (std::abs(cross(l1_begin - l2_begin, l2_end - l2_begin)) < EPS &&
-            std::abs(cross(l1_end   - l2_begin, l2_end - l2_begin)) < EPS) {
-            return
-                interval_intersects(
-                    l1_begin, l1_end,
-                    l2_begin, l2_end);
-        }
-        return
-            (sign(cross(l1_end - l1_begin, l2_end - l1_begin)) !=
-            sign(cross(l1_end - l1_begin, l2_begin - l1_begin))) &&
-            (sign(cross(l2_end - l2_begin, l1_begin - l2_begin)) !=
-            sign(cross(l2_end - l2_begin, l1_end - l2_begin)));
+        
+        return {
+            sum < 0 ? ClockOrder::CCW : ClockOrder::CW,
+            std::abs(sum)
+        };
     }
 
     enum PointLocation {
@@ -118,34 +64,37 @@ namespace popup {
     };
 
     /**
-     *  Check whether a point is inside, outside or on the border
+     *  Given iterators begin and end to a container of points,
+     *  check whether a point is inside, outside or on the border
      *  of a simple polygon using winding numbers.
+     *
+     *  O(n)
      */
     template<typename T, typename RAItr>
-    PointLocation point_in_polygon(const Vec2<T>& point, RAItr begin, RAItr end) {
+    PointLocation point_in_polygon(const Point2<T>& point, RAItr begin, RAItr end) {
         const T EPS = 1e-0;
         double angle_sum = 0;
         auto prev = *begin;
         auto it = begin;
         it++;
         for (; it != end; it++) {
-            double cross_angle =
-                cross((*it - point).normalized(), (prev - point).normalized());
-            double dot_angle =
-                (*it - point).normalized().dot((prev - point).normalized());
+            Vec2<T> v1 = Vec2<T>(*it - point).normalized();
+            Vec2<T> v2 = Vec2<T>(prev - point).normalized();
+            double cross_angle = cross(v1, v2);
+            double dot_angle = v1.dot(v2);
             angle_sum += std::atan2(cross_angle, dot_angle);
-            if (point_on_line(point, prev, *it)) {
+            if (LineSegment<T>(prev, *it).contains_point(point)) {
                 return PointLocation::Border;
             }
             prev = *it;
         }
 
-        double cross_angle =
-            cross((*begin - point).normalized(), (prev - point).normalized());
-        double dot_angle =
-            (*begin - point).normalized().dot((prev - point).normalized());
+        Vec2<T> v1 = Vec2<T>(*begin - point).normalized();
+        Vec2<T> v2 = Vec2<T>(prev - point).normalized();
+        double cross_angle = cross(v1, v2);
+        double dot_angle = v1.dot(v2);
         angle_sum += std::atan2(cross_angle, dot_angle);
-        if (point_on_line(point,  prev, *begin)) {
+        if (LineSegment<T>(prev, *begin).contains_point(point)) {
             return PointLocation::Border;
         }
 
