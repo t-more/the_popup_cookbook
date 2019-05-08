@@ -226,11 +226,6 @@ namespace popup {
     template<typename T>
     using Vec3 = Vec<3, T>;
 
-    template<typename T>
-    using Point2 = Point<2, T>;
-
-    template<typename T>
-    using Point3 = Point<3, T>;
 
     template<typename T>
     Vec<3, T> cross(const Vec<3, T>& a,  const Vec<3, T>& b) {
@@ -267,42 +262,6 @@ namespace popup {
     template <unsigned int Dim, typename T>
     std::ostream& operator<<(std::ostream& out, const Vec<Dim, T> &vec) {
         return out << vec.point_;
-    }
-
-    template <unsigned int Comp, unsigned int Dim, typename T>
-    Point<Dim,T>& max_dim(Point<Dim,T>& a, Point<Dim,T>& b) {
-        if (a[Comp] < b[Comp]) {
-            return b;
-        } else {
-            return a;
-        }
-    }
-
-    template <unsigned int Comp, unsigned int Dim, typename T>
-    Point<Dim,T>& min_dim(Point<Dim,T>& a, Point<Dim,T>& b) {
-        if (a[Comp] < b[Comp]) {
-            return a;
-        } else {
-            return b;
-        }
-    }
-
-    template <unsigned int Dim, typename T>
-    Point<Dim,T>& max_dim(size_t comp, Point<Dim,T>& a, Point<Dim,T>& b) {
-        if (a[comp] < b[comp]) {
-            return b;
-        } else {
-            return a;
-        }
-    }
-
-    template <unsigned int Dim, typename T>
-    Point<Dim,T>& min_dim(size_t comp, Point<Dim,T>& a, Point<Dim,T>& b) {
-        if (a[comp] < b[comp]) {
-            return a;
-        } else {
-            return b;
-        }
     }
 
     template <unsigned int Comp, unsigned int Dim, typename T>
