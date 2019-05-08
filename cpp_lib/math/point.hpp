@@ -331,7 +331,7 @@ namespace popup {
      * Utility function for easily making a point with 2 dimension
      */
     template<typename T>
-    inline Point2<T> make_point2(T a, T b) {
+    inline Point2<T> make_point2(const T& a, const T& b) {
         return {{a, b}};
     }
 
@@ -339,7 +339,7 @@ namespace popup {
      * Utility function for easily making a point with 3 dimension
      */
     template<typename T>
-    inline Point2<T> make_point3(T a, T b) {
+    inline Point2<T> make_point3(const T& a, const T& b, const T& c) {
         return {{a, b, c}};
     }
 
