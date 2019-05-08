@@ -1,9 +1,7 @@
 // Author: Tomas Möre, Markus Östling
 #pragma once
 
-#include <cassert>
 #include <utility>
-#include <iostream>
 #include <limits>
 #include <optional>
 #include <variant>
@@ -195,7 +193,6 @@ namespace popup {
 
             bool f = (sign(cross(b-a, c-a)) != sign(cross(b-a, d-a)));
             bool s = (sign(cross(d-c, a-c)) != sign(cross(d-c, b-c)));
-            // std::cerr << f << " " << s << std::endl;
             return (f && s);
         }
 
@@ -284,6 +281,11 @@ namespace popup {
             return std::nullopt;
         };
 
+        /**
+         * Returns the distance between a segment and  a point.
+         *
+         * Warning: Only works properly for floating point (or rational) variants of T
+         */
         T distance_to(const Point<2, T>& point) const {
             if (contains_point(point)) {
                 return T();
@@ -300,6 +302,11 @@ namespace popup {
             }
         }
 
+        /**
+         * Returns the distance between two segments.
+         *
+         * Warning: Only works properly for floating point (or rational) variants of T
+         */
         T distance_to(const LineSegment& other) const {
             if (is_point()) {
                 return other.distance_to(start_);
@@ -315,10 +322,4 @@ namespace popup {
             }
         }
     };
-
-    template<typename T>
-    std::ostream& operator<<(std::ostream& o, const LineSegment<T>& l) {
-        return o << l.min_point() << "-" << l.max_point();
-    }
-
 }
