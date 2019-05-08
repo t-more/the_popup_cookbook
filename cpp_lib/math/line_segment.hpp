@@ -200,18 +200,10 @@ namespace popup {
          * Returns true if the two line segments are colinear.
          */
         bool colinear(const LineSegment &other) const {
-            auto v1 = Vec<2, T>(*max_ - *min_);
-            v1.normalize();
-            auto v2 = Vec<2, T>(*other.max_ - *other.min_);
-            v2.normalize();
-            Vec<2, T> v3;
-            if (*other.max_ < *max_) {
-                v3 = Vec<2, T>(*max_ - *other.min_);
-            } else {
-                v3 = Vec<2, T>(*other.max_ - *min_);
-            }
-            v3.normalize();
-            return v1.comparable(v2) && v3.comparable(v1);
+            return 0 == cross(
+                Vec2<T>(*max_ - *min_),
+                Vec2<T>(*other.max_ - *min_)
+            );
         }
 
         /**
