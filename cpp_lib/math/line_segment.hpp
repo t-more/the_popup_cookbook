@@ -1,5 +1,5 @@
+// Author: Tomas Möre, Markus Östling
 #pragma once
-#include "./vec.hpp"
 
 #include <cassert>
 #include <utility>
@@ -7,14 +7,26 @@
 #include <limits>
 #include <optional>
 
+#include "point.hpp"
+#include "vec.hpp"
+
 namespace popup {
-    const double EPS = 1e-9;
+    /**
+     * Enum type representing the diffrent kinds intersection types.
+     */
     enum IntersectionType {
                            None = 0,
                            PointIntersect,
                            SegmentIntersect
     };
 
+    /**
+     * The line segment class represents a line segment between two 2d points
+     * and the various operations one might perform on this.
+     *
+     * This class could potentialy be generalised into arbirariy
+     * dimentions. However it is currently only defined in two.
+     */
     template <typename T>
     class LineSegment {
         Point<2, T> start_;
@@ -26,12 +38,13 @@ namespace popup {
 
         /**
          * This method assumes that this object and the other passed as argument
-         * are colinear. Will return a line segment containting the overlap
+         * are colinear. Will return a line segment containting the overlap if
+         * one exists nullopt otherwise.
          */
         std::optional<LineSegment> interval_overlap(
                 const LineSegment& other,
-                T eps = 1e-9) const {
-
+                T eps = 1e-9
+        ) const {
             auto first = std::max(*min_, *other.min_);
             auto second = std::min(*max_, *other.max_);
             if (first < second || first.comparable(second)) {
@@ -46,19 +59,16 @@ namespace popup {
             min_ = &start_;
             max_ = &end_;
         }
+
         LineSegment(const Point<2, T>& a, const Point<2, T>& b) {
             start_ = a;
             end_ = b;
 
             min_ = &end_;
             max_ = &start_;
-            for (size_t i = 0; i < 2; i++) {
-                if (b[i] < a[i]) break;
-                if (a[i] < b[i]) {
-                    min_ = &start_;
-                    max_ = &end_;
-                    break;
-                }
+            if (start_ < end_) {
+                min_ = &start_;
+                max_ = &end_;
             }
         }
 
