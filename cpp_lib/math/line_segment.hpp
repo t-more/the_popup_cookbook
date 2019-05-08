@@ -6,6 +6,7 @@
 #include <iostream>
 #include <limits>
 #include <optional>
+#include <variant>
 
 #include "point.hpp"
 #include "vec.hpp"
@@ -229,27 +230,27 @@ namespace popup {
 
 
         /**
-         *
+         * Checks for an intersection between two line segments.
+         * If there are none
          */
-        std::pair<IntersectionType, LineSegment> intersection(const LineSegment &other, double eps = 1e-9) const {
+        std::variant<std::monostate, Point2<T>, LineSegment<T>> intersection(
+            const LineSegment<T> &other,
+            T eps = 1e-9
+        ) const {
             // Just in case stuff, try remove of nothing works
             if (is_point() && other.is_point()) {
                 if (start_.comparable(other.start_)) {
-                    return {IntersectionType::PointIntersect
-                            , LineSegment(start_, start_)};
+                    return start_;
                 } else {
-                    return {IntersectionType::None
-                            , LineSegment()};
+                    return std::monostate();
                 }
             } else if (is_point() || other.is_point()) {
                 auto& point = is_point() ? start_ : other.start_;
                 auto& line =  is_point() ? other : *this;
                 if (line.contains_point(point)) {
-                    return {IntersectionType::PointIntersect
-                            , LineSegment(point, point)};
+                    return point;
                 } else {
-                    return {IntersectionType::None
-                            , LineSegment()};
+                    return std::monostate();
                 }
             } else if (colinear(other)) {
                 auto opt_overlap = interval_overlap(other);
@@ -257,21 +258,17 @@ namespace popup {
                 if (opt_overlap.has_value()) {
                     auto& overlap = opt_overlap.value();
                     if (overlap.start_.comparable(overlap.end_)) {
-                        return {IntersectionType::PointIntersect
-                                , overlap};
+                        return overlap.start_;
                     } else {
-                        return {IntersectionType::SegmentIntersect
-                                , overlap};
+                        return overlap;
                     }
                 }
 
             } else if (intersects(other)) {
                 if (start_.comparable(end_)) {
-                    return {IntersectionType::PointIntersect
-                            , *this};
+                    return *this;
                 } else if (other.start_.comparable(other.end_)) {
-                    return {IntersectionType::PointIntersect
-                            , other};
+                    return other.start_;
                 }
                 auto t = ((start_[0] - other.start_[0]) * (other.start_[1] - other.end_[1])
                         - (start_[1] - other.start_[1]) * (other.start_[0] - other.end_[0]))
@@ -282,13 +279,10 @@ namespace popup {
 
 
                 if (contains_point(point) && other.contains_point(point)) {
-                    return {IntersectionType::PointIntersect
-                            , LineSegment(point, point)};
+                    return point;
                 }
             }
-            return {IntersectionType::None
-                    , LineSegment<T>()};
-
+            return std::monostate();
         };
 
         T distance_to(const Point<2, T>& point) const {
@@ -301,9 +295,6 @@ namespace popup {
             T l_vec_len = l_vec.norm();
             T scalar_proj = p_vec.scalar_projection_on(l_vec);
             if (0 <= scalar_proj && scalar_proj <= l_vec_len) {
-                // std::cerr << scalar_proj << " * " <<
-                //     l_vec.normalized() << " = " <<
-                //     scalar_proj*(l_vec.normalized())<< std::endl;
                 return (p_vec - scalar_proj * l_vec.normalized()).norm();
             } else {
                 return std::min(start_.distance_to(point), end_.distance_to(point));

@@ -35,20 +35,24 @@ int main() {
       auto ans = a.intersection(b);
 
       cout << setprecision(2) << fixed;
-      switch (ans.first) {
-      case IntersectionType::None:
+      if (std::holds_alternative<Point2<double>>(ans)) {
+          auto point = std::get<Point2<double>>(ans);
+          cout << fix_zero(point[0])
+               << " "
+               << fix_zero(point[1])
+               << "\n";
+      } else if(std::holds_alternative<LineSegment<double>>(ans)) {
+          auto segment = std::get<LineSegment<double>>(ans);
+          cout << fix_zero(segment.min_point()[0])
+               << " "
+               << fix_zero(segment.min_point()[1])
+               << " "
+               << fix_zero(segment.max_point()[0])
+               << " "
+               << fix_zero(segment.max_point()[1])
+               << "\n";
+      } else {
           cout << "none\n";
-          break;
-      case IntersectionType::SegmentIntersect:
-          // cout << ans.second.start()[0] << " " << ans.second.start()[1] << " "
-          //      << ans.second.end()[0] << " " << ans.second.end()[1] << "\n";
-          cout << fix_zero(ans.second.min_point()[0]) << " " << fix_zero(ans.second.min_point()[1]) << " "
-               << fix_zero(ans.second.max_point()[0]) << " " << fix_zero(ans.second.max_point()[1]) << "\n";
-          break;
-      case IntersectionType::PointIntersect:
-          cout << fix_zero(ans.second.start()[0]) << " "
-               << fix_zero(ans.second.start()[1]) << "\n";
-          break;
       }
   }
 
