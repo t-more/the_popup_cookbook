@@ -151,24 +151,24 @@ namespace popup {
         /**
          * Checks if infinite line intersects
          */
-        // bool intersects(const LineSegment &other) const {
-        //     const auto interval_intersects_1d =
-        //         [](T ae, T be, T ce, T de) {
-        //             if (ae > be) std::swap(ae, be);
-        //             if (ce > de) std::swap(ce, de);
-        //             return std::max(ae, ce) <= std::min(be, de);
-        //         };
+        bool intersects(const LineSegment &other) const {
+            const auto interval_intersects_1d =
+                [](T ae, T be, T ce, T de) {
+                    if (ae > be) std::swap(ae, be);
+                    if (ce > de) std::swap(ce, de);
+                    return std::max(ae, ce) <= std::min(be, de);
+                };
 
-        //     for (size_t i = 0; i < 2; i++) {
-        //         auto insertects_in_dim = interval_intersects_1d(
-        //             start_[i],
-        //             end_[i],
-        //             other.start_[i],
-        //             other.end_[i]);
-        //         if (!insertects_in_dim) return false;
-        //     }
-        //     return true;
-        // };
+            for (size_t i = 0; i < 2; i++) {
+                auto insertects_in_dim = interval_intersects_1d(
+                    start_[i],
+                    end_[i],
+                    other.start_[i],
+                    other.end_[i]);
+                if (!insertects_in_dim) return false;
+            }
+            return true;
+        };
 
         bool line_intersects(const LineSegment& other, T eps = 1e-15) const {
             if (colinear(other)) {
@@ -315,5 +315,10 @@ namespace popup {
             }
         }
     };
+
+    template<typename T>
+    std::ostream& operator<<(std::ostream& o, const LineSegment<T>& l) {
+        return o << l.min_point() << "-" << l.max_point();
+    }
 
 }

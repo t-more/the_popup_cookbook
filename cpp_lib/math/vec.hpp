@@ -210,8 +210,7 @@ namespace popup {
             return res;
         }
 
-
-        T distance_to(const Point<Dim, T>& other) const {
+        T square_distance_to(const Point<Dim, T>& other) const {
             T res = T();
             auto it1 = cbegin();
             auto it2 = other.cbegin();
@@ -220,7 +219,11 @@ namespace popup {
                 auto temp = (*it1++) - (*it2++);
                 res += temp * temp;
             }
-            return std::sqrt(res);
+            return res;
+        }
+
+        T distance_to(const Point<Dim, T>& other) const {
+            return std::sqrt(square_distance_to(other));
         }
 
         bool comparable(const Point<Dim, T>& other, const T epsilon = 1e-9) const {
@@ -242,9 +245,11 @@ namespace popup {
         }
 
         bool operator<(const Point<Dim, T>& other) const {
-            for (size_t i = 0; i < dim(); i++) {
+            for (size_t i = 0; i < Dim; i++) {
                 if (at(i) < other.at(i)) {
                     return true;
+                } else if (at(i) != other.at(i)) {
+                    return false;
                 }
             }
             return false;

@@ -62,6 +62,7 @@ namespace popup {
 
         std::vector<Point2<T>> result;
         result.reserve(lower_hull.size() + upper_hull.size() - 2);
+
         for (auto& p : lower_hull) {
             result.push_back(p);
         }
