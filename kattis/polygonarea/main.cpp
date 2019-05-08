@@ -16,18 +16,18 @@ typedef vector<int> vi;
 int main() {
   cin.sync_with_stdio(0);
   cin.tie(0);
-  vector<popup::Vec2<double>> points;
+  vector<popup::Point2<double>> points;
   size_t num_points;
   while (cin >> num_points && num_points != 0) {
       points.clear();
       while (num_points--) {
           double x,y;
           cin >> x >> y;
-          popup::Vec2<double> t({x,y});
+          popup::Point2<double> t({x,y});
           points.push_back(t);
       }
 
-      auto [order, area] = popup::identify_order<double>(
+      auto [order, area] = popup::polygon_order_area<double>(
           points.begin(),
           points.end()
       );

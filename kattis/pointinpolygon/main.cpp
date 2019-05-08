@@ -18,7 +18,7 @@ int main() {
 
     int n;
     while(cin >> n && n != 0) {
-        vector<popup::Vec2<double>> polygon(n);
+        vector<popup::Point2<double>> polygon(n);
         for (auto &v : polygon) {
             cin >> v[0] >> v[1];
         }
@@ -26,7 +26,7 @@ int main() {
         int tests;
         cin >> tests;
         while(tests--) {
-            popup::Vec2<double> v;
+            popup::Point2<double> v;
             cin >> v[0] >> v[1];
             auto res = popup::point_in_polygon<double>(
                 v, 
