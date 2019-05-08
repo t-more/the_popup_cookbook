@@ -35,23 +35,25 @@ int main() {
       auto ans = a.intersection(b);
 
       cout << setprecision(2) << fixed;
-      if (std::holds_alternative<Point2<double>>(ans)) {
-          auto point = std::get<Point2<double>>(ans);
-          cout << fix_zero(point[0])
-               << " "
-               << fix_zero(point[1])
-               << "\n";
-      } else if(std::holds_alternative<LineSegment<double>>(ans)) {
-          auto segment = std::get<LineSegment<double>>(ans);
-          cout << fix_zero(segment.min_point()[0])
-               << " "
-               << fix_zero(segment.min_point()[1])
-               << " "
-               << fix_zero(segment.max_point()[0])
-               << " "
-               << fix_zero(segment.max_point()[1])
-               << "\n";
-      } else {
+      if (ans.has_value()) {
+          if (std::holds_alternative<Point2<double>>(*ans)) {
+              auto point = std::get<Point2<double>>(*ans);
+              cout << fix_zero(point[0])
+                   << " "
+                   << fix_zero(point[1])
+                   << "\n";
+          } else {
+              auto segment = std::get<LineSegment<double>>(*ans);
+              cout << fix_zero(segment.min_point()[0])
+                   << " "
+                   << fix_zero(segment.min_point()[1])
+                   << " "
+                   << fix_zero(segment.max_point()[0])
+                   << " "
+                   << fix_zero(segment.max_point()[1])
+                   << "\n";
+          }
+      }else {
           cout << "none\n";
       }
   }

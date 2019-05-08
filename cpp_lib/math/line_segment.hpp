@@ -230,10 +230,11 @@ namespace popup {
 
 
         /**
-         * Checks for an intersection between two line segments.
-         * If there are none
+         * Checks for an intersection between two line segments.  If there are
+         * none the optional is empty, otherwise. The variant tells what kind of
+         * intersection is found.
          */
-        std::variant<std::monostate, Point2<T>, LineSegment<T>> intersection(
+        std::optional<std::variant<Point2<T>, LineSegment<T>>> intersection(
             const LineSegment<T> &other,
             T eps = 1e-9
         ) const {
@@ -242,7 +243,7 @@ namespace popup {
                 if (start_.comparable(other.start_)) {
                     return start_;
                 } else {
-                    return std::monostate();
+                    return std::nullopt;
                 }
             } else if (is_point() || other.is_point()) {
                 auto& point = is_point() ? start_ : other.start_;
@@ -250,7 +251,7 @@ namespace popup {
                 if (line.contains_point(point)) {
                     return point;
                 } else {
-                    return std::monostate();
+                    return std::nullopt;
                 }
             } else if (colinear(other)) {
                 auto opt_overlap = interval_overlap(other);
@@ -263,7 +264,6 @@ namespace popup {
                         return overlap;
                     }
                 }
-
             } else if (intersects(other)) {
                 if (start_.comparable(end_)) {
                     return *this;
@@ -277,12 +277,11 @@ namespace popup {
                 Point<2,T> point = {{ start_[0] + t * (end_[0] - start_[0])
                                       , start_[1] + t * (end_[1] - start_[1])}};
 
-
                 if (contains_point(point) && other.contains_point(point)) {
                     return point;
                 }
             }
-            return std::monostate();
+            return std::nullopt;
         };
 
         T distance_to(const Point<2, T>& point) const {
