@@ -210,11 +210,8 @@ namespace popup {
          * Returns true if the two line segments are colinear.
          */
         bool parallel(const LineSegment &other) const {
-            auto v1 = Vec<2, T>(*min_ - *max_);
-            v1.normalize();
-            auto v2 = Vec<2, T>(*other.min_ - *other.max_);
-            v2.normalize();
-            return v1.comparable(v2);
+            return 0 == cross(Vec<2, T>(*min_ - *max_),
+                              Vec<2, T>(*other.min_ - *other.max_));
         }
 
 
@@ -227,50 +224,42 @@ namespace popup {
             const LineSegment<T> &other,
             T eps = 1e-9
         ) const {
-            // Just in case stuff, try remove of nothing works
-            if (is_point() && other.is_point()) {
-                if (start_.comparable(other.start_)) {
-                    return start_;
-                } else {
-                    return std::nullopt;
-                }
-            } else if (is_point() || other.is_point()) {
-                auto& point = is_point() ? start_ : other.start_;
-                auto& line =  is_point() ? other : *this;
-                if (line.contains_point(point)) {
-                    return point;
-                } else {
-                    return std::nullopt;
-                }
-            } else if (colinear(other)) {
-                auto opt_overlap = interval_overlap(other);
+            // 0 if others start lies on same line as this
+            auto s_numerator = cross(Vec2<T>(other.end_ - start_),
+                                     Vec2<T>(other.end_ - other.start_));
 
-                if (opt_overlap.has_value()) {
-                    auto& overlap = opt_overlap.value();
-                    if (overlap.start_.comparable(overlap.end_)) {
-                        return overlap.start_;
+            // 0 if parallel
+            auto denominator = cross(Vec2<T>(end_ - start_),
+                                      Vec2<T>(other.end_ - other.start_));
+            auto t_numerator = cross(Vec2<T>(end_ - start_),
+                                     Vec2<T>(start_ - other.start_));
+
+            if (t_numerator == 0 && s_numerator == 0 && denominator == 0) {
+
+                // lines Colinear
+                auto overlap = interval_overlap(other);
+                if (overlap.has_value()) {
+                    if (overlap->start_ == overlap->end_) {
+                        return Point2<T>(overlap->start_);
                     } else {
-                        return overlap;
+                        return *overlap;
                     }
+                } else {
+                    return std::nullopt;
                 }
-            } else if (intersects(other)) {
-                if (start_.comparable(end_)) {
-                    return *this;
-                } else if (other.start_.comparable(other.end_)) {
-                    return other.start_;
-                }
-                auto t = ((start_[0] - other.start_[0]) * (other.start_[1] - other.end_[1])
-                        - (start_[1] - other.start_[1]) * (other.start_[0] - other.end_[0]))
-                        / ((start_[0] - end_[0])*(other.start_[1]-other.end_[1])
-                        - (start_[1] - end_[1]) * (other.start_[0] - other.end_[0]));
-                Point<2,T> point = {{ start_[0] + t * (end_[0] - start_[0])
-                                      , start_[1] + t * (end_[1] - start_[1])}};
-
-                if (contains_point(point) && other.contains_point(point)) {
-                    return point;
+            } else if (denominator == 0) {
+                // Lines parallel, no overlap
+                return std::nullopt;
+            } else {
+                auto s = s_numerator / denominator;
+                auto t = t_numerator / denominator;
+                if (0 <= s && s <= 1 && 0 <= t && t <= 1) {
+                    // There exists an intersection
+                    return start_ + s * (end_ - start_);
+                } else {
+                    return std::nullopt;
                 }
             }
-            return std::nullopt;
         };
 
         /**
