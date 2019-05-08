@@ -1,3 +1,4 @@
+// Author: Tomas Möre, Markus Östling
 #pragma once
 #include <cmath>
 #include <initializer_list>
@@ -27,25 +28,33 @@ namespace popup {
 
         Vec(const Point<Dim, T>& point) : point_(point) {}
 
-        size_t size() const {
-            return point_.dim();
-        }
         size_t dim() const {
             return point_.dim();
         }
+        /**
+         * Redefiniton of dim, to conform to standard c++ naming.
+         */
+        size_t size() const {
+            return point_.dim();
+        }
 
+        /**
+         * Gives a copy of internal point used in the vector
+         */
         Point<Dim,T> as_point() const {
             return point_;
         }
 
+        /**
+         * Gives the internal point used in the vector as a reference (can be
+         * good for large points)
+         */
         const Point<Dim,T>& point() const {
             return point_;
         }
 
 
-
         // Iterator defenitions
-
         inline T* begin() {
             return point_.begin();
         }
@@ -71,7 +80,10 @@ namespace popup {
             return point_.cend();
         }
 
-        //// Arithmetic operations
+        /**
+         * The operator methods defined bellow contains elementwise mathematical
+         * operation for points.
+         */
 
         // Addition
         inline void operator+=(const Vec<Dim, T>& other) {
@@ -157,7 +169,9 @@ namespace popup {
             return lhs.point_ / rhs;
         }
 
-        // Arithmetic end
+        /**
+         * Operator free accessor. Non safe for bounds
+         */
         inline T at(size_t i) const {
             return point_[i];
         }
@@ -170,6 +184,11 @@ namespace popup {
             return point_[i];
         }
 
+        /**
+         * Dot product between two vectors
+         *
+         * O(n)
+         */
         T dot(const Vec<Dim, T>& other) const {
             T res = T();
             auto it1 = cbegin();
@@ -180,10 +199,22 @@ namespace popup {
             return res;
         }
 
+        /**
+         * Gives the length of the vector. Uses square root and thefore should
+         * not be used with non floating point values.
+         *
+         * O(n)
+         */
         T norm() const {
             return std::sqrt(norm_square());
         }
 
+        /**
+         * Gives the squared length of a vector. Good for simple
+         * comparisons. Between vectors.
+         *
+         * O(n)
+         */
         T norm_square() const {
             T res = T();
             for (const auto &  e  : *this) {
@@ -200,20 +231,41 @@ namespace popup {
         }
 
         /**
-         * Mutates the vector into a normalized form.
+         * Returns a new vector that is the normalized version of the current
+         * vector
          */
         Vec<Dim, T> normalized() const {
             return (*this) / norm();
         }
 
+        /**
+         * Checks wther two points are comparable, for floating point values
+         * ther also exists an epsilon check for error handling reasons. It is
+         * expected that the optional argument is rounded down to 0 for other
+         * kinds of values.
+         *
+         * O(n)
+         */
         bool comparable(const Vec<Dim, T>& other, const T epsilon = 1e-9) const {
             return point_.comparable(other.point_, epsilon);
         }
 
+        /**
+         * Returns a vector that is the projection of this vector uppon some
+         * other vector.
+         *
+         * O(n)
+         */
         Vec<Dim, T> projected_on(const Vec<Dim, T>& other) {
             return dot(other) / other.norm_square();
         }
 
+        /**
+         * Returns the fraction of how much of the current vector is projected
+         * unto another vector.
+         *
+         * O(n)
+         */
         T scalar_projection_on(const Vec<Dim, T>& other) {
             return dot(other.normalized());
         }
@@ -227,6 +279,11 @@ namespace popup {
     using Vec3 = Vec<3, T>;
 
 
+    /**
+     * Returns the cross product of a 3-d vector
+     *
+     * O(1)
+     */
     template<typename T>
     Vec<3, T> cross(const Vec<3, T>& a,  const Vec<3, T>& b) {
         return {
@@ -236,12 +293,22 @@ namespace popup {
         };
     }
 
+    /**
+     * Returns the cross product of a 1-d vector
+     *
+     * O(1)
+     */
     template<typename T>
     T cross(const Vec<2, T>& a,  const Vec<2, T>& b) {
         return a[0] * b[1] - a[1] * b[0];
     }
 
-    // Returns the anti clocwise angle between two vectors
+
+    /**
+     * Returns the anti clockwise angle between two 2d vectors
+     *
+     * O(1)
+     */
     template<typename T>
     double angle(const Vec<2, T>& a,  const Vec<2, T>& b) {
         auto cos_angle = a.dot(b) / (a.norm() * b.norm());
@@ -253,24 +320,41 @@ namespace popup {
         return res;
     }
 
-
+    /**
+     * Utility function for creating two dimentional vectors
+     *
+     * O(1)
+     */
     template<typename T>
-    Vec2<T> vec2(const T p1, const T p2){
+    inline Vec2<T> vec2(const T& p1, const T& p2){
         return {{p1,p2}};
     }
 
+    /**
+     * Prints the vector as a json-like array.
+     *
+     * O(1)
+     */
     template <unsigned int Dim, typename T>
     std::ostream& operator<<(std::ostream& out, const Vec<Dim, T> &vec) {
         return out << vec.point_;
     }
 
+    /**
+     * Returns the element with the largest value at certain dimension given by
+     * the template argument Comp
+     */
     template <unsigned int Comp, unsigned int Dim, typename T>
-    Vec<Dim,T>& max_dim(Vec<Dim,T>& a, Vec<Dim,T>& b) {
+    inline Vec<Dim,T>& max_dim(const Vec<Dim,T>& a, const Vec<Dim,T>& b) {
         return max_dim<Comp>(a.point_, b.point_);
     }
 
+    /**
+     * Returns the element with the smallest value at certain dimension given by
+     * the template argument Comp
+     */
     template <unsigned int Comp, unsigned int Dim, typename T>
-    Vec<Dim,T>& min_dim(Vec<Dim,T>& a, Vec<Dim,T>& b) {
+    inline Vec<Dim,T>& min_dim(Vec<Dim,T>& a, Vec<Dim,T>& b) {
         return min_dim<Comp>(a.point_, b.point_);
     }
 } // namespace popup

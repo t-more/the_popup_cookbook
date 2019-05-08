@@ -345,10 +345,11 @@ namespace popup {
 
 
     /**
-     * Returns the element with the largest value at certain dimension
+     * Returns the element with the largest value at certain dimension given by
+     * the template argument Comp
      */
     template <unsigned int Comp, unsigned int Dim, typename T>
-    Point<Dim,T>& max_dim(Point<Dim,T>& a, Point<Dim,T>& b) {
+    Point<Dim,T>& max_dim(const Point<Dim,T>& a, const Point<Dim,T>& b) {
         if (a[Comp] < b[Comp]) {
             return b;
         } else {
@@ -357,10 +358,11 @@ namespace popup {
     }
 
     /**
-     * Returns the element with the smallest value at certain dimension
+     * Returns the element with the smallest value at certain dimension given by
+     * the template argument Comp
      */
     template <unsigned int Comp, unsigned int Dim, typename T>
-    Point<Dim,T>& min_dim(Point<Dim,T>& a, Point<Dim,T>& b) {
+    Point<Dim,T>& min_dim(const Point<Dim,T>& a, const Point<Dim,T>& b) {
         if (a[Comp] < b[Comp]) {
             return a;
         } else {
@@ -373,7 +375,7 @@ namespace popup {
      * runtime index
      */
     template <unsigned int Dim, typename T>
-    Point<Dim,T>& max_dim(size_t comp, Point<Dim,T>& a, Point<Dim,T>& b) {
+    Point<Dim,T>& max_dim(size_t comp, const Point<Dim,T>& a, const Point<Dim,T>& b) {
         if (a[comp] < b[comp]) {
             return b;
         } else {
@@ -386,7 +388,7 @@ namespace popup {
      * runtime index
      */
     template <unsigned int Dim, typename T>
-    Point<Dim,T>& min_dim(size_t comp, Point<Dim,T>& a, Point<Dim,T>& b) {
+    Point<Dim,T>& min_dim(size_t comp, const Point<Dim,T>& a, const Point<Dim,T>& b) {
         if (a[comp] < b[comp]) {
             return a;
         } else {
