@@ -15,20 +15,72 @@ typedef vector<int> vi;
 
 using shittype = double;
 
-int main() {
-  cin.sync_with_stdio(0);
-  cin.tie(0);
+int64_t next_int64() {
+  char c = getchar_unlocked();
+  char prefix_char = 0;
+  while ('0' > c || '9' < c) {
+    prefix_char = c;
+    c = getchar_unlocked();
+  }
+  int x = 0;
+  while ('0' <= c && c <= '9') {
+    x = 10 * x + c - '0';
+    c = getchar_unlocked();
+  }
+  return (((prefix_char != '-') << 1) - 1) * x;
+}
 
-  size_t num_points;
+double next_double() {
+  char c = getchar_unlocked();
+  char prefix_char = 0;
+  while ('0' > c || '9' < c) {
+    prefix_char = c;
+    c = getchar_unlocked();
+  }
+  int64_t x = 0;
+  while ('0' <= c && c <= '9') {
+    x = 10 * x + c - '0';
+    c = getchar_unlocked();
+  }
+  if (c == '.') {
+      c = getchar_unlocked();
+      int following = 0;
+      while ('0' <= c && c <= '9') {
+          x = 10 * x + c - 48;
+          c = getchar_unlocked();
+          following++;
+      }
+      if (following == 2) {
+          return (double)((((prefix_char != '-') << 1) - 1) * x) / (double)100;
+      } else {
+          return (double)((((prefix_char != '-') << 1) - 1) * x) / (double)10;
+      }
+  }
+  return (double)((((prefix_char != '-') << 1) - 1) * x);
+}
+
+uint32_t next_word32() {
+  char c = getchar_unlocked();
+  while ('0' > c || '9' < c) {
+    c = getchar_unlocked();
+  }
+  int x = 0;
+  while ('0' <= c && c <= '9') {
+    x = 10 * x + c - 48;
+    c = getchar_unlocked();
+  }
+  return x;
+}
+
+int main() {
 
   vector<Point2<shittype>> points;
   //  cout << setprecision(2);
   cout << fixed;
-  while (cin >> num_points && num_points != 0) {
+  for (auto num_points = next_word32(); num_points != 0; num_points = next_word32()) {
       points.clear();
       for (size_t i = 0; i < num_points; i++) {
-          double a, b;
-          cin >> a >> b;
+          double a = next_double(), b = next_double();
           points.push_back(
               Point2<shittype>({(shittype)(a * 1)
                                , (shittype)(b * 1)})
