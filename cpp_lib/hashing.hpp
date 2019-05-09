@@ -1,13 +1,13 @@
 // Author: Marcus Östling, Tomas Möre
 #pragma once
 #include <vector>
+#include <string>
 
 namespace popup {
-
     /**
      * "real" modulus
      */
-    unsigned long long mod(unsigned long long x, unsigned long long m) {
+    uint64_t mod(uint64_t x, uint64_t m) {
         return ((x % m) + m) % m;
     }
 
@@ -17,8 +17,7 @@ namespace popup {
      *
      *  source: wikipedia
      */
-    uint64_t mul_mod(uint64_t a, uint64_t b, uint64_t m)
-    {
+    uint64_t mul_mod(uint64_t a, uint64_t b, uint64_t m) {
         long double x;
         uint64_t c;
         int64_t r;
@@ -37,8 +36,8 @@ namespace popup {
      * O(1), look up
      */
     class RollingHash {
-        const uint64_t m = 922337220451ULL;                                    
-        const uint64_t p = 16069ULL;                                           
+        const uint64_t m = 922337220451ULL;
+        const uint64_t p = 16069ULL;
         const uint64_t inv = 184249329619ULL;
         std::vector<uint64_t> inverses; // pow(2, 31) % 1e9+9
         std::vector<uint64_t> hashes;
@@ -60,7 +59,7 @@ namespace popup {
             inverses[1] = inv;
             for(uint64_t i = 2; i < str.size(); i++) {
                 inverses[i] = mul_mod(inverses[i-1], inverses[1], m);
-            }     
+            }
         }
 
     public:
@@ -70,7 +69,7 @@ namespace popup {
             compute_hash();
         }
 
-        /** 
+        /**
          *  Return complete hash
          *
          *  O(1)

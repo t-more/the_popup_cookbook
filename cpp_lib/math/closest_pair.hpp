@@ -20,8 +20,8 @@ namespace popup {
      *
      *  Finally, points from the two different subsets are compared. But,
      *  only does point whos distance might be less that the current minimum.
-     *  These point are those whos x-distance to the mid point is less than 
-     *  minimum distance and those above which is no longer than the minimum 
+     *  These point are those whos x-distance to the mid point is less than
+     *  minimum distance and those above which is no longer than the minimum
      *  distance away in y-coordinate.
      */
     template<typename T, typename RAItr>
@@ -31,7 +31,6 @@ namespace popup {
         T& min_dist,
         std::pair<Point2<T>, Point2<T>>& min_points
     ) {
-
         const auto compare_y =
             [](const Point2<T>& a, const Point2<T>& b) {
                 return a[1] < b[1];
@@ -66,13 +65,12 @@ namespace popup {
         merge(begin, mid, mid, end, merge_buf.begin(), compare_y);
         copy(merge_buf.begin(), merge_buf.begin() + (end - begin), begin);
 
-        // Here merge_buf is used to store the point 
+        // Here merge_buf is used to store the point
         // that we actually want to look at
         auto c_points = merge_buf.begin();
         for (auto p_itr = begin; p_itr != end; p_itr++) {
-            if (((p_itr->at(0) - mid_x) * (p_itr->at(0) - mid_x)) < min_dist) {
-                
-                // Constant time SHOW WHY! 
+            auto distance_to_mid = p_itr->at(0) - mid_x;
+            if (distance_to_mid * distance_to_mid < min_dist) {
                 for (auto cp_itr = c_points -1;
                      cp_itr != merge_buf.begin() -1
                          && (p_itr->at(1) - cp_itr->at(1)) * (p_itr->at(1) - cp_itr->at(1)) < min_dist;
@@ -92,7 +90,7 @@ namespace popup {
      *  to eachother.
      *
      *  Algorithm origin: Preparata and Shamos
-     *  O(nlogn)
+     *  O(n logn)
      */
     template<typename T, typename RAItr>
     std::pair<Point2<T>, Point2<T>> closest_pair(
