@@ -200,11 +200,11 @@ namespace popup {
          * Returns true if the two line segments are colinear.
          */
         bool colinear(const LineSegment &other) const {
-            return 0 == cross(
+            return T(0) == cross(
                 Vec2<T>(*max_ - *min_),
                 Vec2<T>(*other.max_ - *min_)
             )
-            && 0 == cross(
+                && T(0) == cross(
                 Vec2<T>(*max_ - *min_),
                 Vec2<T>(*other.min_ - *min_)
             );
@@ -214,7 +214,7 @@ namespace popup {
          * Returns true if the two line segments are colinear.
          */
         bool parallel(const LineSegment &other) const {
-            return 0 == cross(Vec<2, T>(*min_ - *max_),
+            return T(0) == cross(Vec<2, T>(*min_ - *max_),
                               Vec<2, T>(*other.min_ - *other.max_));
         }
 
@@ -280,7 +280,7 @@ namespace popup {
             auto l_vec = Vec(*max_ - *min_);
             T l_vec_len = l_vec.norm();
             T scalar_proj = p_vec.scalar_projection_on(l_vec);
-            if (0 <= scalar_proj && scalar_proj <= l_vec_len) {
+            if (T(0) <= scalar_proj && scalar_proj <= l_vec_len) {
                 return (p_vec - scalar_proj * l_vec.normalized()).norm();
             } else {
                 return std::min(start_.distance_to(point), end_.distance_to(point));

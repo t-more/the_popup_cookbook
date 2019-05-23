@@ -58,7 +58,7 @@ namespace popup {
         /**
          *  Returns numerator.
          */
-        inline V numenator() const {
+        inline V numerator() const {
             return numerator_;
         }
 
@@ -134,6 +134,9 @@ namespace popup {
             t *= other;
             return t;
         }
+        friend Rational<V> operator*(const V& a, const Rational<V>& b) {
+            return Rational<V>(a * b.numerator_, b.denominator_);
+        }
 
         /**
          *  Multiplication with another rational number.
@@ -158,6 +161,10 @@ namespace popup {
             return t;
         }
 
+        inline Rational<V> operator/(const V& d) const {
+            return Rational<V>(numerator_, denominator_ * 2);
+        }
+
         /**
          *  Division with another rational number.
          *  Set this rational number equal to the quotent
@@ -169,6 +176,36 @@ namespace popup {
             numerator_ = new_n * ((0 < new_d) - (new_d < 0));
             denominator_ = std::abs(new_d);
             reduce();
+        }
+
+        friend bool operator>(const popup::Rational<V>& a, const popup::Rational<V>& b) {
+            return !(a<=b);
+        }
+
+        friend bool operator<(const popup::Rational<V>& a, const popup::Rational<V>& b) {
+            V q1 = V(0);
+            V r1 = a.numerator();
+            V q2 = V(0);
+            V r2 = b.numerator();
+            while (!((q1 < q2 || q2 > q1) || (r1 == 0 || r2 == 0))) {
+                q1 = r1 / a.denominator();
+                r1 = r1 % a.denominator();
+                q2 = r2 / b.denominator();
+                r2 = r2 % b.denominator();
+            }
+            return (!(q1 == q2) && q1 < q2) || r1 == 0;
+        }
+
+        friend bool operator<=(const popup::Rational<V>& a, const popup::Rational<V>& b) {
+            return a == b || a < b;
+        }
+
+        friend bool operator==(const popup::Rational<V>& a, const popup::Rational<V>& b) {
+            return a.numerator() == b.numerator() && a.denominator() == b.denominator();
+        }
+
+        friend bool operator!=(const popup::Rational<V>& a, const popup::Rational<V>& b) {
+            return !(a == b);
         }
 
         friend std::ostream& operator<< (std::ostream& os, const popup::Rational<V>& a) {
@@ -183,39 +220,12 @@ namespace popup {
      */
     template <class V>
     inline Rational<V> abs(const Rational<V>& a) {
-        return Rational<V>(std::abs(a.numenator()),a.denominator());
+        return Rational<V>(std::abs(a.numerator()),a.denominator());
     }
-
-
 
     // (x:%y) <= (x':%y')  =  x * y' <= x' * y
     //  (x:%y) <  (x':%y')  =  x * y' <  x' * y
 }
-
-template <class V>
-inline bool operator>(const popup::Rational<V>& a, const popup::Rational<V>& b) {
-    return !(a<=b);
-}
-
-template <class V>
-inline bool operator<(const popup::Rational<V>& a, const popup::Rational<V>& b) {
-    return a.numenator() * b.denominator() < b.numenator() * a.denominator();
-}
-template <class V>
-inline bool operator<=(const popup::Rational<V>& a, const popup::Rational<V>& b) {
-    return a.numenator() * b.denominator() <= b.numenator() * a.denominator();
-}
-
-template <class V>
-inline bool operator==(const popup::Rational<V>& a, const popup::Rational<V>& b) {
-    return a.numenator() == b.numenator() && a.denominator() == b.denominator();
-}
-
-template <class V>
-inline bool operator!=(const popup::Rational<V>& a, const popup::Rational<V>& b) {
-    return !(a == b);
-}
-
 
 
 namespace std {
@@ -228,5 +238,28 @@ namespace std {
     template<typename T>
     popup::Rational<T> abs(const popup::Rational<T>& r) {
         return popup::abs(r);
+    }
+
+
+    // This is a bit dangerous, overflows easily
+    template<typename T>
+    popup::Rational<T> sqrt(const popup::Rational<T>& r) {
+        const popup::Rational<T> eps =
+            popup::Rational<T>(1, 10000000);
+
+        popup::Rational<T> guess = r / 2;
+        popup::Rational<T> err = guess * guess - r;
+
+        int i = 3;
+        while (i--) {
+            std::cerr << err << endl;
+            guess = guess - err / (2 * guess);
+            err = guess * guess - r;
+        }
+        return guess;
+    }
+
+    std::ostream& operator<<(std::ostream& os, __int128 t) {
+        return os << int64_t(t);
     }
 }
