@@ -297,7 +297,7 @@ namespace popup {
                 return other.distance_to(start_);
             } else if (other.is_point()) {
                 return distance_to(other.start_);
-            } else if (line_intersects(other)) {
+            } else if (intersection(other)) {
                 return T();
             } else {
                 return std::min(std::min(other.distance_to(start_),
