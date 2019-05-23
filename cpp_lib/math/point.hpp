@@ -266,7 +266,8 @@ namespace popup {
          */
         bool comparable(const Point<Dim, T>& other, const T epsilon = 1e-9) const {
             for (size_t i = 0; i < Dim; i++) {
-                if (!(std::abs((*this)[i] - other[i]) < epsilon)) {
+
+                if (!(std::abs((*this)[i] - other[i]) <= epsilon)) {
                     return false;
                 }
             }

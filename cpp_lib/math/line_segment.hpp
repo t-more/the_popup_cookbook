@@ -203,11 +203,11 @@ namespace popup {
             return 0 == cross(
                 Vec2<T>(*max_ - *min_),
                 Vec2<T>(*other.max_ - *min_)
-            ) 
+            )
             && 0 == cross(
                 Vec2<T>(*max_ - *min_),
                 Vec2<T>(*other.min_ - *min_)
-            ); 
+            );
         }
 
         /**
@@ -238,7 +238,7 @@ namespace popup {
             auto t_numerator = cross(Vec2<T>(end_ - start_),
                                      Vec2<T>(start_ - other.start_));
 
-            if (t_numerator == 0 && s_numerator == 0 && denominator == 0) {
+            if (t_numerator == T(0) && s_numerator == T(0) && denominator == T(0)) {
 
                 // lines Colinear
                 auto overlap = interval_overlap(other);
@@ -251,13 +251,13 @@ namespace popup {
                 } else {
                     return std::nullopt;
                 }
-            } else if (denominator == 0) {
+            } else if (denominator == T(0)) {
                 // Lines parallel, no overlap
                 return std::nullopt;
             } else {
                 auto s = s_numerator / denominator;
                 auto t = t_numerator / denominator;
-                if (0 <= s && s <= 1 && 0 <= t && t <= 1) {
+                if (T(0) <= s && s <= T(1) && T(0) <= t && t <= T(1)) {
                     // There exists an intersection
                     return start_ + s * (end_ - start_);
                 } else {

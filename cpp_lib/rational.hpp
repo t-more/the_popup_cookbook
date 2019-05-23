@@ -7,208 +7,226 @@
 
 namespace popup {
 
-  /**
-   * Class that handles basic arithmetic with rational numbers.
-   */
-  template <class V>
-  class Rational {
-    V numerator_;
-    V denominator_;
+    /**
+     * Class that handles basic arithmetic with rational numbers.
+     */
+    template <class V>
+    class Rational {
+        V numerator_;
+        V denominator_;
+
+        /**
+         *  Reduce the number to the smallest rational number.
+         */
+        inline void reduce() {
+            auto d = std::gcd(numerator_, denominator_);
+            numerator_ = numerator_ / d;
+            denominator_ = denominator_ / d;
+        }
+
+    public:
+
+        Rational() : Rational(0,1) {}
+
+
+        /**
+         *  Construct a copy of a rational number.
+         */
+        Rational(const Rational<V>& o) {
+            numerator_ = o.numerator_;
+            denominator_ = o.denominator_;
+        }
+
+        /**
+         *  Construct a rational number given
+         *  its numerator and denominator.
+         */
+        Rational(V n, V d) {
+            numerator_ = n * ((0 < d) - (d < 0));
+            denominator_ = std::abs(d);
+            reduce();
+        }
+
+        /**
+         *  Construct a rational number given
+         *  only the numerator.
+         */
+        Rational(V n) : Rational(n,1) {}
+
+
+
+        /**
+         *  Returns numerator.
+         */
+        inline V numenator() const {
+            return numerator_;
+        }
+
+        /**
+         *  Returns denominator.
+         */
+        inline V denominator() const {
+            return denominator_;
+        }
+
+        /**
+         *  Addition with another rational number.
+         *  Returns a new rational number.
+         */
+        inline Rational<V> operator+(const Rational<V>& other) const {
+            Rational<V> t(*this);
+            t += other;
+            return t;
+        }
+
+        /**
+         *  Addition with another rational number.
+         *  Set this rational number equal to the sum
+         *  of this and the other rational number.
+         */
+        inline void operator+=(const Rational<V>& other) {
+            auto new_numerator = numerator_ * other.denominator_
+                + other.numerator_ * denominator_;
+            auto new_denominator = denominator_*other.denominator_;
+            numerator_ = new_numerator;
+            denominator_ = new_denominator;
+            reduce();
+        }
+
+        /**
+         *  Subraction with another rational number.
+         *  Returns a new rational number.
+         */
+        inline Rational<V> operator-() const {
+            numerator_ = -numerator_;
+            return this;
+        }
+
+        /**
+         * Returns the negation of this rational number.
+         */
+        inline Rational<V> operator-(const Rational<V>& other) const {
+            Rational<V> t(*this);
+            t -= other;
+            return t;
+        }
+
+        /**
+         *  Subtraction with another rational number.
+         *  Set this rational number equal to the difference
+         *  of this and the other rational number.
+         */
+        inline void operator-=(const Rational<V>& other) {
+            auto new_numerator = numerator_ * other.denominator_
+                - other.numerator_ * denominator_;
+            auto new_denominator = denominator_*other.denominator_;
+            numerator_ = new_numerator;
+            denominator_ = new_denominator;
+            reduce();
+        }
+
+        /**
+         *  Multiplication with another rational number.
+         *  Returns a new rational number.
+         */
+        inline Rational<V> operator*(const Rational<V>& other) const {
+            Rational<V> t(*this);
+            t *= other;
+            return t;
+        }
+
+        /**
+         *  Multiplication with another rational number.
+         *  Set this rational number equal to the product
+         *  of this and the other rational number.
+         */
+        inline void operator*=(const Rational<V>& other) {
+            V new_n = numerator_ * other.numerator_;
+            V new_d = denominator_ * other.denominator_;
+            numerator_ = new_n;
+            denominator_ = new_d;
+            reduce();
+        }
+
+        /**
+         *  Division with another rational number.
+         *  Returns a new rational number.
+         */
+        inline Rational<V> operator/(const Rational<V>& other) const {
+            Rational<V> t(*this);
+            t /= other;
+            return t;
+        }
+
+        /**
+         *  Division with another rational number.
+         *  Set this rational number equal to the quotent
+         *  of this and the other rational number.
+         */
+        inline void operator/=(const Rational<V>& other) {
+            auto new_n = numerator_ * other.denominator_;
+            auto new_d = denominator_ * other.numerator_;
+            numerator_ = new_n * ((0 < new_d) - (new_d < 0));
+            denominator_ = std::abs(new_d);
+            reduce();
+        }
+
+        friend std::ostream& operator<< (std::ostream& os, const popup::Rational<V>& a) {
+            std::cout << a.numerator_ << "/" << a.denominator_;
+            return os;
+        }
+
+    };
 
     /**
-     *  Reduce the number to the smallest rational number.
+     *  Returns the absolute value of given rational number.
      */
-    inline void reduce() {
-      auto d = std::gcd(numerator_, denominator_);
-      numerator_ = numerator_ / d;
-      denominator_ = denominator_ / d;
+    template <class V>
+    inline Rational<V> abs(const Rational<V>& a) {
+        return Rational<V>(std::abs(a.numenator()),a.denominator());
     }
 
-  public:
-
-      Rational() {
-          numerator_ = 0;
-          denominator_ = 1;
-      }
-    /**
-     *  Construct a copy of a rational number.
-     */
-    Rational(const Rational& o) {
-      numerator_ = o.numerator_;
-      denominator_ = o.denominator_;
-    }
-
-    /**
-     *  Construct a rational number given
-     *  its numerator and denominator.
-     */
-    Rational(V n, V d) {
-      numerator_ = n * ((0 < d) - (d < 0));
-      denominator_ = std::abs(d);
-      reduce();
-    }
-
-    /**
-     *  Construct a rational number given
-     *  only the numerator.
-     */
-    Rational(V n) : Rational(n,1) {}
-
-    /**
-     *  Returns numerator.
-     */
-    inline V numenator() const {
-      return numerator_;
-    }
-
-    /**
-     *  Returns denominator.
-     */
-    inline V denominator() const {
-      return denominator_;
-    }
-
-    /**
-     *  Addition with another rational number.
-     *  Returns a new rational number.
-     */
-    inline Rational<V> operator+(const Rational<V>& other) const {
-      Rational<V> t(*this);
-      t += other;
-      return t;
-    }
-
-    /**
-     *  Addition with another rational number.
-     *  Set this rational number equal to the sum
-     *  of this and the other rational number.
-     */
-    inline void operator+=(const Rational<V>& other) {
-      auto new_numerator = numerator_ * other.denominator_
-                         + other.numerator_ * denominator_;
-      auto new_denominator = denominator_*other.denominator_;
-      numerator_ = new_numerator;
-      denominator_ = new_denominator;
-      reduce();
-    }
-
-    /**
-     *  Subraction with another rational number.
-     *  Returns a new rational number.
-     */
-    inline Rational<V> operator-() const {
-      numerator_ = -numerator_;
-      return this;
-    }
-
-    /**
-     * Returns the negation of this rational number.
-     */
-    inline Rational<V> operator-(const Rational<V>& other) const {
-      Rational<V> t(*this);
-      t -= other;
-      return t;
-    }
-
-    /**
-     *  Subtraction with another rational number.
-     *  Set this rational number equal to the difference
-     *  of this and the other rational number.
-     */
-    inline void operator-=(const Rational<V>& other) {
-      auto new_numerator = numerator_ * other.denominator_
-                         - other.numerator_ * denominator_;
-      auto new_denominator = denominator_*other.denominator_;
-      numerator_ = new_numerator;
-      denominator_ = new_denominator;
-      reduce();
-    }
-
-    /**
-     *  Multiplication with another rational number.
-     *  Returns a new rational number.
-     */
-    inline Rational<V> operator*(const Rational<V>& other) const {
-      Rational<V> t(*this);
-      t *= other;
-      return t;
-    }
-
-    /**
-     *  Multiplication with another rational number.
-     *  Set this rational number equal to the product
-     *  of this and the other rational number.
-     */
-    inline void operator*=(const Rational<V>& other) {
-      V new_n = numerator_ * other.numerator_;
-      V new_d = denominator_ * other.denominator_;
-      numerator_ = new_n;
-      denominator_ = new_d;
-      reduce();
-    }
-
-    /**
-     *  Division with another rational number.
-     *  Returns a new rational number.
-     */
-    inline Rational<V> operator/(const Rational<V>& other) const {
-      Rational<V> t(*this);
-      t /= other;
-      return t;
-    }
-
-    /**
-     *  Division with another rational number.
-     *  Set this rational number equal to the quotent
-     *  of this and the other rational number.
-     */
-    inline void operator/=(const Rational<V>& other) {
-      auto new_n = numerator_ * other.denominator_;
-      auto new_d = denominator_ * other.numerator_;
-      numerator_ = new_n * ((0 < new_d) - (new_d < 0));
-      denominator_ = std::abs(new_d);
-      reduce();
-    }
-
-  };
-
-  /**
-   *  Returns the absolute value of given rational number.
-   */
-  template <class V>
-  inline Rational<V> abs(const Rational<V>& a) {
-    return Rational<V>(std::abs(a.numenator()),a.denominator());
-  }
 
 
-
-  // (x:%y) <= (x':%y')  =  x * y' <= x' * y
-  //  (x:%y) <  (x':%y')  =  x * y' <  x' * y
+    // (x:%y) <= (x':%y')  =  x * y' <= x' * y
+    //  (x:%y) <  (x':%y')  =  x * y' <  x' * y
 }
 
 template <class V>
 inline bool operator>(const popup::Rational<V>& a, const popup::Rational<V>& b) {
-  return !(a<=b);
+    return !(a<=b);
 }
 
 template <class V>
 inline bool operator<(const popup::Rational<V>& a, const popup::Rational<V>& b) {
-  return a.numenator() * b.denominator() < b.numenator() * a.denominator();
+    return a.numenator() * b.denominator() < b.numenator() * a.denominator();
 }
 template <class V>
 inline bool operator<=(const popup::Rational<V>& a, const popup::Rational<V>& b) {
-  return a.numenator() * b.denominator() <= b.numenator() * a.denominator();
+    return a.numenator() * b.denominator() <= b.numenator() * a.denominator();
 }
+
 template <class V>
 inline bool operator==(const popup::Rational<V>& a, const popup::Rational<V>& b) {
-  return a.numenator() == b.numenator() && a.denominator() == b.denominator();
+    return a.numenator() == b.numenator() && a.denominator() == b.denominator();
 }
+
+template <class V>
+inline bool operator!=(const popup::Rational<V>& a, const popup::Rational<V>& b) {
+    return !(a == b);
+}
+
+
 
 namespace std {
 
-  template<typename T>
-  popup::Rational<T> fabs(const popup::Rational<T>& r) {
-    return popup::abs(r);
-  }
+    template<typename T>
+    popup::Rational<T> fabs(const popup::Rational<T>& r) {
+        return popup::abs(r);
+    }
 
+    template<typename T>
+    popup::Rational<T> abs(const popup::Rational<T>& r) {
+        return popup::abs(r);
+    }
 }
