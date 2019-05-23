@@ -283,6 +283,10 @@ namespace popup {
             return true;
         }
 
+        bool operator!=(const Point<Dim, T>& other) {
+            return !(*this == other);
+        }
+
         /**
          * Default comparison operator for points. Primarily sorts by 'low
          * dimentions'. Only compares higher dimentions if the values of the
@@ -301,6 +305,15 @@ namespace popup {
                 }
             }
             return false;
+        }
+
+        bool operator<=(const Point<Dim, T>& other) const {
+            for (size_t i = 0; i < Dim; i++) {
+                if (at(i) > other.at(i)) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         /**

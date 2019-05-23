@@ -286,11 +286,11 @@ namespace popup {
      */
     template<typename T>
     Vec<3, T> cross(const Vec<3, T>& a,  const Vec<3, T>& b) {
-        return {
+        return Vec<3, T>({
                 a[1] * b[2] - a[2] * b[1],
                 a[2] * b[0] - a[0] * b[2],
                 a[0] * b[1] - a[1] * b[0]
-        };
+            });
     }
 
     /**
@@ -337,7 +337,7 @@ namespace popup {
      */
     template <unsigned int Dim, typename T>
     std::ostream& operator<<(std::ostream& out, const Vec<Dim, T> &vec) {
-        return out << vec.point_;
+        return out << vec.point();
     }
 
     /**

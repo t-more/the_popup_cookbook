@@ -50,7 +50,7 @@ namespace popup {
             prev = current;
         }
         sum /= 2.0;
-        
+
         return {
             sum < 0 ? ClockOrder::CCW : ClockOrder::CW,
             std::abs(sum)
@@ -72,7 +72,7 @@ namespace popup {
      */
     template<typename T, typename RAItr>
     PointLocation point_in_polygon(const Point2<T>& point, RAItr begin, RAItr end) {
-        const T EPS = 1e-0;
+        const double EPS = 1e-9;
         double angle_sum = 0;
         auto prev = *begin;
         auto it = begin;
@@ -98,7 +98,7 @@ namespace popup {
             return PointLocation::Border;
         }
 
-        if (std::abs(angle_sum) < EPS) {
+        if (std::abs(angle_sum) <= EPS) {
             return PointLocation::Outside;
         } else {
             return PointLocation::Inside;

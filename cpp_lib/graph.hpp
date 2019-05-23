@@ -150,7 +150,7 @@ namespace popup {
             size_t,
             std::shared_ptr<BellmanFordResult<T>>
         > bellman_ford_cache_;
-
+    public:
         /**
          * Internal method to get edges originating for a particular node
          */
@@ -158,7 +158,7 @@ namespace popup {
             return list_[node];
         }
 
-    public:
+
 
         Graph(size_t size) {
             size_ = size;
@@ -253,6 +253,57 @@ namespace popup {
             }
         };
 
+
+        std::vector<T>
+        dijkstra_dist(size_t from) const {
+            const auto cmp = [](
+                const std::pair<size_t, T>& a,
+                const std::pair<size_t, T>& b
+            ) {
+                                 return a.second > b.second;
+                             };
+            std::priority_queue<
+                std::pair<size_t, T>,
+                std::vector<std::pair<size_t, T>>,
+                decltype(cmp)
+                > queue(cmp);
+            std::vector<T> distances(num_nodes(), std::numeric_limits<T>::max());
+            // size_t::max() is the value representing that a node never has been viewed
+            std::vector<size_t> came_from(
+                num_nodes(),
+                std::numeric_limits<size_t>::max()
+            );
+            std::vector<bool> visited(num_nodes(), 0);
+
+            distances[from] = 0;
+            queue.emplace(std::make_pair(from,0));
+
+            while (!queue.empty()) {
+                auto e = queue.top();
+                queue.pop();
+                auto current_node = e.first;
+
+                if (visited[current_node]) {
+                    continue;
+                }
+
+                visited[current_node] = true;
+                auto cost = distances[current_node];
+
+                for (const auto& edge : list_[current_node]) {
+                    auto node = edge.to();
+                    const auto weight = edge.weight();
+                    auto node_dist = distances[node];
+                    auto alt_dist = weight + cost;
+                    if (node_dist > alt_dist) {
+                        distances[node] = alt_dist;
+                        came_from[node] = current_node;
+                        queue.emplace(std::make_pair(node, alt_dist));
+                    }
+                }
+            }
+            return distances;
+        };
 
         /**
          * Standard dijkstra on the path. May not be run on graphs with negative
