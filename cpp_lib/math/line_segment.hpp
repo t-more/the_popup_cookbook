@@ -1,4 +1,4 @@
-// Author: Tomas Möre, Markus Östling
+// Author: Tomas Möre, Marcus Östling
 #pragma once
 
 #include <utility>
@@ -142,7 +142,7 @@ namespace popup {
          * Return the length of the line segment.
          */
         T length() {
-            return start_.distance(end_);
+            return start_.distance_to(end_);
         }
 
 
@@ -203,7 +203,11 @@ namespace popup {
             return 0 == cross(
                 Vec2<T>(*max_ - *min_),
                 Vec2<T>(*other.max_ - *min_)
-            );
+            ) 
+            && 0 == cross(
+                Vec2<T>(*max_ - *min_),
+                Vec2<T>(*other.min_ - *min_)
+            ); 
         }
 
         /**
