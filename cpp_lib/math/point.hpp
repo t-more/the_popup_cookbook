@@ -6,6 +6,11 @@
 #include <array>
 #include <iostream>
 
+namespace std {
+    __float128 sqrt(__float128 d) {
+        return sqrt((long double) d);
+    }
+}
 namespace popup {
     const double PI = 3.1415926535897932384626433;
 

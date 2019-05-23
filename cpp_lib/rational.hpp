@@ -25,6 +25,11 @@ namespace popup {
     }
 
   public:
+
+      Rational() {
+          numerator_ = 0;
+          denominator_ = 1;
+      }
     /**
      *  Construct a copy of a rational number.
      */
