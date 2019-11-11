@@ -281,7 +281,8 @@ namespace popup {
             T l_vec_len = l_vec.norm();
             T scalar_proj = p_vec.scalar_projection_on(l_vec);
             if (T(0) <= scalar_proj && scalar_proj <= l_vec_len) {
-                return (p_vec - scalar_proj * l_vec.normalized()).norm();
+                 // return (p_vec - scalar_proj * l_vec.normalized()).norm();
+                return Vec2<T>::norm(p_vec - p_vec.projected_on(l_vec));
             } else {
                 return std::min(start_.distance_to(point), end_.distance_to(point));
             }
